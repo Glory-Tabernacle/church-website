@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { useToast } from '@/components/ui/toast-provider'
 import { GENDER_LABELS, type Gender } from '@/lib/types/group-member'
 import { type ChildrenAgeGroup } from '@/lib/types/inaugural-registration'
@@ -83,6 +84,14 @@ export function InauguralManager({
   const [error, setError] = useState<string | null>(null)
   const [previewBadge, setPreviewBadge] = useState<BadgeData | null>(null)
   const [hasInteracted, setHasInteracted] = useState(false)
+  // Accordion-style: only one row expanded at a time. Click a chevron to
+  // reveal children-attending detail + supplementary address / home-church
+  // fields for that registrant. Clicking again (or another chevron) closes.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  const toggleExpand = (id: string) => {
+    setExpandedId((current) => (current === id ? null : id))
+  }
 
   // Debounce the search box.
   useEffect(() => {
@@ -194,6 +203,8 @@ export function InauguralManager({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {/* Empty header for the expand-chevron column. */}
+              <th className="w-10 px-2 py-3" aria-hidden="true" />
               <Th>Registration ID</Th>
               <Th>Name</Th>
               <Th>Email</Th>
@@ -209,96 +220,193 @@ export function InauguralManager({
           <tbody className="divide-y divide-gray-200 bg-white">
             {data.registrations.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-6 py-12 text-center text-sm text-gray-500">
+                <td colSpan={11} className="px-6 py-12 text-center text-sm text-gray-500">
                   {isLoading ? 'Loading…' : 'No registrations match your search.'}
                 </td>
               </tr>
             ) : (
-              data.registrations.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <Td>
-                    <button
-                      type="button"
-                      onClick={() => copyId(r)}
-                      title="Click to copy"
-                      className="font-mono text-xs font-bold tracking-wider text-[#000666] hover:underline"
-                    >
-                      {r.registrationId}
-                    </button>
-                  </Td>
-                  <Td>
-                    <span className="font-medium text-gray-900">
-                      {r.firstName} {r.lastName}
-                    </span>
-                  </Td>
-                  <Td>
-                    <a className="text-blue-600 hover:underline" href={`mailto:${r.email}`}>
-                      {r.email}
-                    </a>
-                  </Td>
-                  <Td>{GENDER_LABELS[r.gender]}</Td>
-                  <Td>
-                    <Pill kind={r.isRccgMember ? 'green' : 'gray'}>
-                      {r.isRccgMember ? 'Member' : 'Non-member'}
-                    </Pill>
-                  </Td>
-                  <Td>
-                    {r.fromOutsideBarnstaple ? (
-                      <span className="text-xs text-gray-700">
-                        {r.homeChurch ?? 'Outside Barnstaple'}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">Barnstaple</span>
-                    )}
-                  </Td>
-                  <Td>
-                    <Pill kind={r.photographyConsent ? 'green' : 'gray'}>
-                      {r.photographyConsent ? '📸 Yes' : 'No'}
-                    </Pill>
-                  </Td>
-                  <Td>
-                    {r.bringingChildren ? (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold text-[#000666]">
-                          👨‍👩‍👧 {r.numberOfChildren ?? '—'}
+              data.registrations.map((r) => {
+                const isExpanded = expandedId === r.id
+                return (
+                  <Fragment key={r.id}>
+                    <tr className={isExpanded ? 'bg-gray-50' : 'hover:bg-gray-50'}>
+                      <td className="w-10 px-2 py-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleExpand(r.id)}
+                          aria-label={isExpanded ? 'Hide details' : 'Show details'}
+                          aria-expanded={isExpanded}
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700"
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </td>
+                      <Td>
+                        <button
+                          type="button"
+                          onClick={() => copyId(r)}
+                          title="Click to copy"
+                          className="font-mono text-xs font-bold tracking-wider text-[#000666] hover:underline"
+                        >
+                          {r.registrationId}
+                        </button>
+                      </Td>
+                      <Td>
+                        <span className="font-medium text-gray-900">
+                          {r.firstName} {r.lastName}
                         </span>
-                        {r.childrenAgeGroups && r.childrenAgeGroups.length > 0 && (
-                          <span className="flex flex-wrap gap-1">
-                            {r.childrenAgeGroups.map((age) => (
-                              <span
-                                key={age}
-                                className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700"
-                              >
-                                {age}
-                              </span>
-                            ))}
+                      </Td>
+                      <Td>
+                        <a className="text-blue-600 hover:underline" href={`mailto:${r.email}`}>
+                          {r.email}
+                        </a>
+                      </Td>
+                      <Td>{GENDER_LABELS[r.gender]}</Td>
+                      <Td>
+                        <Pill kind={r.isRccgMember ? 'green' : 'gray'}>
+                          {r.isRccgMember ? 'Member' : 'Non-member'}
+                        </Pill>
+                      </Td>
+                      <Td>
+                        {r.fromOutsideBarnstaple ? (
+                          <span className="text-xs text-gray-700">
+                            {r.homeChurch ?? 'Outside Barnstaple'}
                           </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">Barnstaple</span>
                         )}
-                        {r.childrenSpecialNeeds && (
-                          <span
-                            className="text-[10px] italic text-gray-500"
-                            title={r.childrenSpecialNeeds}
+                      </Td>
+                      <Td>
+                        <Pill kind={r.photographyConsent ? 'green' : 'gray'}>
+                          {r.photographyConsent ? '📸 Yes' : 'No'}
+                        </Pill>
+                      </Td>
+                      <Td>
+                        {r.bringingChildren ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(r.id)}
+                            className="flex flex-col items-start gap-1 text-left"
                           >
-                            ⚠ note
-                          </span>
+                            <span className="text-xs font-bold text-[#000666] hover:underline">
+                              {r.numberOfChildren ?? '—'} {r.numberOfChildren === 1 ? 'child' : 'children'}
+                            </span>
+                            {r.childrenSpecialNeeds && (
+                              <span className="text-[10px] uppercase tracking-wider text-amber-700">
+                                Note
+                              </span>
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
                         )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">None</span>
+                      </Td>
+                      <Td>{formatDate(r.createdAt)}</Td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right">
+                        <button
+                          type="button"
+                          onClick={() => viewBadge(r)}
+                          className="rounded-lg bg-[#000666] px-3 py-1.5 text-xs font-bold text-white hover:opacity-90"
+                        >
+                          View badge
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Spotify-style detail panel — muted gray canvas, tight
+                        eyebrow labels + large primary values, one prominent
+                        block for children (the field this manager was missing)
+                        with quoted special-needs note when present. */}
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={11} className="border-l-2 border-[#000666] bg-gray-50 p-0">
+                          <div className="grid grid-cols-1 gap-8 px-8 py-8 md:grid-cols-3 md:gap-10">
+                            {/* Children — the star of the panel */}
+                            <section className="md:col-span-2">
+                              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-gray-500">
+                                Children attending
+                              </p>
+                              {r.bringingChildren ? (
+                                <div className="mt-4 space-y-6">
+                                  <div className="flex items-baseline gap-3">
+                                    <span className="text-5xl font-extrabold leading-none text-[#000666]">
+                                      {r.numberOfChildren ?? '—'}
+                                    </span>
+                                    <span className="text-sm text-gray-500">
+                                      {r.numberOfChildren === 1 ? 'child coming with them' : 'children coming with them'}
+                                    </span>
+                                  </div>
+
+                                  {r.childrenAgeGroups && r.childrenAgeGroups.length > 0 && (
+                                    <div>
+                                      <p className="text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-gray-400">
+                                        Age groups
+                                      </p>
+                                      <p className="mt-2 text-sm font-medium text-gray-800">
+                                        {r.childrenAgeGroups.join('  ·  ')}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {r.childrenSpecialNeeds ? (
+                                    <div>
+                                      <p className="text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-amber-700">
+                                        Special needs to be aware of
+                                      </p>
+                                      <blockquote className="mt-2 border-l-2 border-amber-400 pl-4 text-sm italic leading-relaxed text-gray-700">
+                                        {r.childrenSpecialNeeds}
+                                      </blockquote>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-gray-400">No special-needs note left</p>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="mt-4 text-sm text-gray-400">Not bringing any children.</p>
+                              )}
+                            </section>
+
+                            {/* Supplementary info column */}
+                            <section className="space-y-6">
+                              <div>
+                                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-gray-500">
+                                  Address
+                                </p>
+                                <p className="mt-2 whitespace-normal text-sm text-gray-800">
+                                  {r.address || <span className="text-gray-400">—</span>}
+                                </p>
+                              </div>
+
+                              {r.fromOutsideBarnstaple && (
+                                <div>
+                                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-gray-500">
+                                    Home church
+                                  </p>
+                                  <p className="mt-2 text-sm text-gray-800">
+                                    {r.homeChurch ?? <span className="text-gray-400">Not specified</span>}
+                                  </p>
+                                </div>
+                              )}
+
+                              <div>
+                                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-gray-500">
+                                  Photography
+                                </p>
+                                <p className="mt-2 text-sm text-gray-800">
+                                  {r.photographyConsent ? 'Happy to be photographed' : 'Prefers not to be photographed'}
+                                </p>
+                              </div>
+                            </section>
+                          </div>
+                        </td>
+                      </tr>
                     )}
-                  </Td>
-                  <Td>{formatDate(r.createdAt)}</Td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <button
-                      type="button"
-                      onClick={() => viewBadge(r)}
-                      className="rounded-lg bg-[#000666] px-3 py-1.5 text-xs font-bold text-white hover:opacity-90"
-                    >
-                      View badge
-                    </button>
-                  </td>
-                </tr>
-              ))
+                  </Fragment>
+                )
+              })
             )}
           </tbody>
         </table>

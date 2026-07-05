@@ -16,10 +16,8 @@ export default async function TractsPage() {
       where: { published: true },
       orderBy: { createdAt: 'desc' }
     }) as Tract[]
-    console.log(":::::::>>>>>>>>", rows);
     tracts = rows
   } catch (err) {
-    console.error('Error fetching tracts:', err)
     error = 'Failed to load tracts. Please try again later.'
   }
 

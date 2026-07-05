@@ -2,10 +2,18 @@
 
 import QRCode from 'react-qr-code'
 import { Printer, X } from 'lucide-react'
-import {
-  INAUGURAL_THEME,
-  INAUGURAL_SERVICE_TIME,
-} from '@/lib/types/inaugural-registration'
+import { INAUGURAL_THEME } from '@/lib/types/inaugural-registration'
+
+/**
+ * The programme flyer used on /inaugural-service/register, /programme,
+ * the homepage CTA, the confirmation email, and the OG image — kept in
+ * one place so if the artwork ever gets re-uploaded to Cloudinary, all
+ * six surfaces move together. `w_1200,c_limit,q_auto,f_auto` keeps the
+ * fetch small in the browser while still giving crisp printed output on
+ * A6 badges at ~88mm wide.
+ */
+const FLYER_URL =
+  'https://res.cloudinary.com/deckwmsth/image/upload/w_1200,c_limit,q_auto,f_auto/v1782403597/Inaugural_Service_Thumbnail_okeluk.png'
 
 export interface BadgeData {
   registrationId: string
@@ -116,40 +124,20 @@ export function BadgeCard({ data }: { data: BadgeData }) {
         border: '2px solid rgba(0,6,102,0.12)',
       }}
     >
-      {/* Header — navy gradient with eyebrow + event name + date. */}
-      <div
-        className="relative px-6 pt-6 pb-5 text-center text-white"
-        style={{
-          background:
-            'linear-gradient(135deg, rgba(0,6,102,1) 0%, rgba(27,34,119,1) 60%, rgba(0,6,102,1) 100%)',
-        }}
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-40"
-          style={{
-            background:
-              'radial-gradient(circle, rgba(163,246,156,0.4) 0%, rgba(0,6,102,0) 70%)',
-          }}
+      {/* Header — full-bleed programme flyer. The artwork already carries
+          the event name, theme, scripture, date, time, and venue, so we
+          deliberately don't layer any text on it. A plain <img> (not
+          next/image) is used because the badge is rendered inside a
+          print-scoped root — some print engines choke on next/image's
+          runtime wrapper, but <img> is universally supported and Cloudinary
+          serves an already-optimised JPG/WebP for us. */}
+      <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={FLYER_URL}
+          alt={`Inaugural Service — ${INAUGURAL_THEME.title} (${INAUGURAL_THEME.scripture})`}
+          className="block h-auto w-full"
         />
-        <p
-          className="text-[0.55rem] font-bold uppercase tracking-[0.3em]"
-          style={{ color: 'rgba(163,246,156,1)' }}
-        >
-          Glory Ahead
-        </p>
-        <h2 className="mt-1 font-serif text-xl font-extrabold leading-tight">
-          Inaugural Service
-        </h2>
-        <p
-          className="mt-1.5 font-serif text-[0.78rem] italic leading-tight"
-          style={{ color: 'rgba(163,246,156,1)' }}
-        >
-          Theme: <span className="font-bold not-italic">{INAUGURAL_THEME.title}</span> · {INAUGURAL_THEME.scripture}
-        </p>
-        <p className="mt-1.5 text-[0.65rem] font-semibold tracking-wider text-white/80">
-          Sunday · 19 July 2026 · {INAUGURAL_SERVICE_TIME}
-        </p>
       </div>
 
       {/* Name block */}

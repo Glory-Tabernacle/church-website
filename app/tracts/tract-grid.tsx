@@ -213,17 +213,17 @@ function TractCard({ tract, index }: { tract: DisplayTract; index: number }) {
             {tract.description}
           </p>
 
-          {/* Primary actions: View PDF + Share side by side */}
+          {/* Primary actions: Read Tract + Share side by side */}
           <div className="mt-3 grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setViewerOpen(true)}
               className="inline-flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-bold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: 'var(--church-green)' }}
-              aria-label={`View ${tract.title}`}
+              aria-label={`Read ${tract.title}`}
             >
               <FileText className="h-3.5 w-3.5" aria-hidden="true" />
-              View PDF
+              Read Tract
             </button>
             <button
               type="button"
@@ -310,9 +310,31 @@ function PdfViewerModal({
     }
   }, [onClose])
 
-  // #toolbar=0 hides Chrome's built-in PDF toolbar so our chrome stays clean.
-  // Other browsers ignore the fragment and show their own toolbar — that's fine.
-  const iframeSrc = `${documentUrl}#toolbar=0&navpanes=0&view=FitH`
+  // Mobile browsers (iOS Safari + Android Chrome especially) don't render
+  // PDFs inside a bare <iframe> reliably — the iframe stays blank or shows
+  // a "download" icon instead of the actual content. To keep the modal
+  // usable on phones we route mobile users through Google's Docs Viewer:
+  // it fetches the PDF server-side and serves back an HTML rendering of
+  // each page, which every mobile browser can scroll through natively.
+  //
+  // Desktop keeps the direct-iframe path — it's faster and lets users
+  // use the browser's built-in zoom + find controls.
+  const [useMobileFallback, setUseMobileFallback] = useState(false)
+  useEffect(() => {
+    const isMobile =
+      window.matchMedia('(max-width: 767px)').matches ||
+      /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    setUseMobileFallback(isMobile)
+  }, [])
+
+  // #toolbar=0 hides Chrome's built-in PDF toolbar on desktop so our
+  // chrome stays clean. Other desktop browsers ignore the fragment and
+  // show their own toolbar — fine.
+  const desktopSrc = `${documentUrl}#toolbar=0&navpanes=0&view=FitH`
+  // gview embeds the PDF as scrollable HTML pages, which works on iOS
+  // Safari + Android Chrome where iframe-src-PDF doesn't.
+  const mobileSrc = `https://docs.google.com/gview?url=${encodeURIComponent(documentUrl)}&embedded=true`
+  const iframeSrc = useMobileFallback ? mobileSrc : desktopSrc
 
   return (
     <div
