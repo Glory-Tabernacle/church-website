@@ -20,11 +20,8 @@ export function SessionManager({
   const [showWarning, setShowWarning] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState(0)
 
-  console.log('SessionManager mounted with timeout:', timeout, 'ms')
-
   // Logout function
   const logout = useCallback(async () => {
-    console.log('🔴 Logging out due to inactivity...')
     try {
       // Clear all timers
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
