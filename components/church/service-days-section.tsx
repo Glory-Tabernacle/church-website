@@ -73,7 +73,7 @@ const SERVICE_COLUMNS: ServiceColumn[] = [
       },
       {
         name: 'Business Service',
-        day: 'Every Sunday',
+        day: 'Coming Soon (Sunday)',
         time: '5:00pm',
         icon: 'briefcase',
       },

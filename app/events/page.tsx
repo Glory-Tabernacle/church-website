@@ -155,7 +155,7 @@ export default async function EventsPage() {
               headerIcon={Church}
               items={[
                 { icon: Church, name: '1st Service', day: 'Every Sunday', time: '10:00am' },
-                { icon: Briefcase, name: 'Business Service', day: 'Every Sunday', time: '5:00pm' },
+                { icon: Briefcase, name: 'Business Service', day: 'Coming Soon(Sunday)', time: '5:00pm' },
                 { icon: Sparkles, name: 'Celebration Service', day: '1st Sunday of the month', time: '10:00am' },
                 { icon: HeartHandshake, name: 'Anointing & Healing', day: 'Last Sunday of the month', time: '10:00am' },
               ]}
