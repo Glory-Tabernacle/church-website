@@ -24,6 +24,12 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
+import {
+  INAUGURAL_SERVICE_DATE,
+  INAUGURAL_SERVICE_TIME,
+  INAUGURAL_SERVICE_VENUE,
+  INAUGURAL_THEME,
+} from '@/lib/types/inaugural-registration'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,10 +79,43 @@ async function loadUpcomingEvents(): Promise<PublicEvent[]> {
   }
 }
 
+/**
+ * The inaugural service isn't a row in the Event table — it's a
+ * constant in `lib/types/inaugural-registration` because it drives the
+ * registration form, the poster, the badge, the OG image, the email,
+ * and the homepage CTA (single source of truth). We surface it here as
+ * a synthetic PublicEvent so it shows up under "Upcoming Gatherings"
+ * alongside anything an admin has added, and disappears automatically
+ * once the date has passed.
+ */
+const INAUGURAL_FLYER_URL =
+  'https://res.cloudinary.com/deckwmsth/image/upload/v1782403597/Inaugural_Service_Thumbnail_okeluk.png'
+
+function buildInauguralEvent(): PublicEvent | null {
+  if (INAUGURAL_SERVICE_DATE.getTime() < Date.now()) return null
+  return {
+    id: 'inaugural-service-2026',
+    title: `Inaugural Service — ${INAUGURAL_THEME.title}`,
+    description: `Our very first gathering as RCCG Glory Tabernacle, Barnstaple. Theme: ${INAUGURAL_THEME.title} (${INAUGURAL_THEME.scripture}). Register in under a minute — we'll have a personal printed badge waiting for you at the door.`,
+    date: INAUGURAL_SERVICE_DATE,
+    time: INAUGURAL_SERVICE_TIME,
+    location: `${INAUGURAL_SERVICE_VENUE.name}, ${INAUGURAL_SERVICE_VENUE.address}`,
+    imageSrc: INAUGURAL_FLYER_URL,
+    imageAlt: `Inaugural Service — ${INAUGURAL_THEME.title} (${INAUGURAL_THEME.scripture})`,
+    registrationHref: '/inaugural-service/register',
+  }
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function EventsPage() {
-  const events = await loadUpcomingEvents()
+  const dbEvents = await loadUpcomingEvents()
+  const inaugural = buildInauguralEvent()
+  // Merge + re-sort by date ascending so the inaugural slots into its
+  // natural chronological position (rather than always being first).
+  const events = (inaugural ? [inaugural, ...dbEvents] : dbEvents).sort(
+    (a, b) => a.date.getTime() - b.date.getTime()
+  )
   const featured = events[0] ?? null
   const sideEvent = events[1] ?? null
   const gridEvents = events.slice(2)
