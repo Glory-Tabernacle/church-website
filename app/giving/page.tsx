@@ -100,10 +100,25 @@ export default function GivingPage() {
             </p>
           </div>
 
-          {/* 2×3 grid — 5 cards */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Image + card side-by-side on desktop, stacked on mobile.
+              The offering photograph gives the section a warm, human
+              feel and stops the single bank card from looking lonely. */}
+          <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-10">
 
-            {/* Bank Transfer UK */}
+            {/* Offering photograph */}
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,6,102,0.12)]">
+              <Image
+                src="/offering.jpeg"
+                alt="An offering being brought to the altar at RCCG Glory Tabernacle, Barnstaple"
+                fill
+                className="object-cover object-center"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            </div>
+
+            {/* Bank Transfer UK — sole active giving method for now.
+                Additional methods live below this grid commented out;
+                un-comment as they get rolled out. */}
             <GivingCard>
               <CardHeader
                 icon={<Building2 className="h-4 w-4" style={{ color: 'rgba(0,6,102,1)' }} />}
