@@ -1,11 +1,13 @@
 'use client'
 
 import { Fragment, useEffect, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Printer } from 'lucide-react'
 import { useToast } from '@/components/ui/toast-provider'
 import { GENDER_LABELS, type Gender } from '@/lib/types/group-member'
 import { type ChildrenAgeGroup } from '@/lib/types/inaugural-registration'
 import { InauguralBadge, type BadgeData } from './inaugural-badge'
+
+type PerPage = 4 | 6 | 8
 
 export interface DashboardInauguralRegistration {
   id: string
@@ -84,6 +86,7 @@ export function InauguralManager({
   const [error, setError] = useState<string | null>(null)
   const [previewBadge, setPreviewBadge] = useState<BadgeData | null>(null)
   const [hasInteracted, setHasInteracted] = useState(false)
+  const [printPickerOpen, setPrintPickerOpen] = useState(false)
   // Accordion-style: only one row expanded at a time. Click a chevron to
   // reveal children-attending detail + supplementary address / home-church
   // fields for that registrant. Clicking again (or another chevron) closes.
@@ -185,12 +188,23 @@ export function InauguralManager({
           }}
           className="w-full max-w-lg rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500"
         />
-        <p className="text-sm text-gray-600">
-          {data.total === 0
-            ? 'No registrations yet'
-            : `Showing ${startIdx}–${endIdx} of ${data.total}`}
-          {isLoading && ' · loading…'}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-gray-600">
+            {data.total === 0
+              ? 'No registrations yet'
+              : `Showing ${startIdx}–${endIdx} of ${data.total}`}
+            {isLoading && ' · loading…'}
+          </p>
+          <button
+            type="button"
+            onClick={() => setPrintPickerOpen(true)}
+            disabled={data.total === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#000666] px-4 py-2 text-sm font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Printer className="h-4 w-4" aria-hidden="true" />
+            Print badges
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -445,6 +459,103 @@ export function InauguralManager({
       {previewBadge && (
         <InauguralBadge data={previewBadge} onClose={() => setPreviewBadge(null)} />
       )}
+
+      {printPickerOpen && (
+        <PrintPickerModal onClose={() => setPrintPickerOpen(false)} />
+      )}
+    </div>
+  )
+}
+
+/**
+ * Small modal that asks how many badges to print per A4 sheet, then
+ * opens the /print route with that setting in a new tab. Kept inline
+ * here because it's only used from this manager — no need for its own
+ * file yet.
+ */
+function PrintPickerModal({ onClose }: { onClose: () => void }) {
+  const [perPage, setPerPage] = useState<PerPage>(4)
+
+  const options: { value: PerPage; hint: string }[] = [
+    { value: 4, hint: '2 × 2 grid — largest badges, easiest to cut and hand out' },
+    { value: 6, hint: '2 × 3 grid — a balanced size, fewer sheets to print' },
+    { value: 8, hint: '2 × 4 grid — most compact, uses the least paper' },
+  ]
+
+  const printUrl = `/dashboard/inaugural-service/print?perPage=${perPage}`
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="print-picker-title"
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="border-b border-gray-200 px-6 py-5">
+          <h3 id="print-picker-title" className="text-lg font-bold text-[#000666]">
+            Print all badges
+          </h3>
+          <p className="mt-1 text-sm text-gray-600">
+            Choose how many badges you&apos;d like on each A4 sheet. The next
+            screen will show a preview and open the browser&apos;s print dialog.
+          </p>
+        </div>
+
+        <div className="space-y-2 px-6 py-5">
+          {options.map((opt) => {
+            const active = perPage === opt.value
+            return (
+              <label
+                key={opt.value}
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                  active
+                    ? 'border-[#000666] bg-[#000666]/5'
+                    : 'border-gray-200 hover:border-[#000666]/50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="perPage"
+                  value={opt.value}
+                  checked={active}
+                  onChange={() => setPerPage(opt.value)}
+                  className="mt-1 h-4 w-4 border-gray-400 text-[#000666] focus:ring-[#000666]"
+                />
+                <div>
+                  <p className="text-sm font-bold text-gray-900">
+                    {opt.value} per page
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-500">{opt.hint}</p>
+                </div>
+              </label>
+            )
+          })}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-6 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <a
+            href={printUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onClose}
+            className="inline-flex items-center rounded-lg bg-[#000666] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+          >
+            Open print view
+          </a>
+        </div>
+      </div>
     </div>
   )
 }
