@@ -31,6 +31,13 @@ import {
   INAUGURAL_THEME,
 } from '@/lib/types/inaugural-registration'
 
+// Don't statically cache this page — the roster of upcoming events changes
+// whenever an admin publishes / edits / deletes an event in the dashboard,
+// and we want that change visible on the next request, not on the next
+// deploy. `force-dynamic` re-runs `loadUpcomingEvents` per request so the
+// list is always current.
+export const dynamic = 'force-dynamic'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PublicEvent {
@@ -65,10 +72,16 @@ function formatLongDate(d: Date): string {
  */
 async function loadUpcomingEvents(): Promise<PublicEvent[]> {
   try {
+    // Compare against START OF TODAY, not "now". Otherwise an event
+    // scheduled for 10am today falls off the /events page at 10:01am
+    // even though it's still today — feels like a bug to visitors.
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+
     const events: PublicEvent[] = await prisma.event.findMany({
       where: {
         published: true,
-        date: { gte: new Date() },
+        date: { gte: startOfToday },
       },
       orderBy: { date: 'asc' },
     })
