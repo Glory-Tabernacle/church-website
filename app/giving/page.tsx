@@ -105,11 +105,15 @@ export default function GivingPage() {
               feel and stops the single bank card from looking lonely. */}
           <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-10">
 
-            {/* Offering photograph */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,6,102,0.12)]">
+            {/* Offering graphic — designed flyer with account details baked
+                in. Aspect ratio here (16/9) MATCHES the actual image
+                (1600×900), so `object-cover` no longer crops the numbers on
+                the edges. If the source file ever changes shape, update this
+                aspect to match to keep the graphic fully visible. */}
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(0,6,102,0.12)]">
               <Image
                 src="/offering.jpeg"
-                alt="An offering being brought to the altar at RCCG Glory Tabernacle, Barnstaple"
+                alt="Offering & Tithe — RCCG Glory Tabernacle, Barnstaple: Account 12399462, Sort Code 30-54-66, Lloyds Bank"
                 fill
                 className="object-cover object-center"
                 sizes="(max-width: 768px) 100vw, 50vw"
