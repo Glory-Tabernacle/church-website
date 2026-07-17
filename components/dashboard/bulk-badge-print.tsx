@@ -44,13 +44,9 @@ interface Props {
 const ROWS_PER_PAGE: Record<PerPage, number> = { 4: 2, 6: 3, 8: 4 }
 
 /**
- * A4 usable height after 8mm margins is ~281mm. We aim for 262mm actual
- * badge area, leaving ~19mm of safety headroom for browser rendering
- * quirks (some print engines add 1-2mm of extra padding per grid row,
- * or interpret CSS mm slightly differently from paper mm — either
- * pushed the bottom-most row's QR + ID off the page in the previous
- * calculation). The trimmed layout still fills the sheet visually and
- * prints reliably.
+ * A4 usable height after 8mm margins is ~281mm. We reserve ~19mm of
+ * safety headroom (leaving 262mm actual) so browser rendering quirks
+ * never push the bottom-most row off the sheet.
  */
 function badgeHeightMm(perPage: PerPage): number {
   const rows = ROWS_PER_PAGE[perPage]
@@ -59,17 +55,23 @@ function badgeHeightMm(perPage: PerPage): number {
 }
 
 /**
- * Cap the flyer strip so it never devours the badge and pushes QR / ID
- * out of the printable box. 30% of badge height is the sweet spot:
- * flyer stays legible, name and QR always have room below.
+ * Height reserved at the top of each badge for the flyer. The flyer
+ * itself is rendered with object-fit: contain inside this box, so the
+ * WHOLE flyer is always visible — narrower on smaller layouts,
+ * letterboxed with white sides. Better than cropping the artwork.
+ *
+ * For perPage=4 we go bigger (46mm ≈ 36% of badge) so the flyer fills
+ * more of the badge visually. For 6 and 8 we shrink proportionally.
  */
 function flyerHeightMm(perPage: PerPage): number {
-  return badgeHeightMm(perPage) * 0.3
+  const bh = badgeHeightMm(perPage)
+  if (perPage === 4) return Math.min(46, bh * 0.36)
+  if (perPage === 6) return bh * 0.3
+  return bh * 0.24
 }
 
 /** QR pixel size scales with badge size. Minimum ~55px still scans on most
- *  phone cameras at reading distance. Sizes tuned down slightly from the
- *  previous values so the whole QR + ID block fits within the budget. */
+ *  phone cameras at reading distance. */
 function qrPixelSize(perPage: PerPage): number {
   return perPage === 4 ? 100 : perPage === 6 ? 72 : 56
 }
@@ -103,21 +105,37 @@ export function BulkBadgePrint({ badges, perPage }: Props) {
           background: white;
           border: 1px solid rgba(0,6,102,0.15);
           border-radius: 6px;
-          /* overflow removed from the badge itself so content never
-             gets clipped — sizes are now enforced per-element instead. */
+          overflow: hidden;
           display: flex;
           flex-direction: column;
         }
         .flyer-strip {
-          overflow: hidden;
           flex-shrink: 0;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
+        /* object-fit: contain — shows the WHOLE flyer inside the strip
+           height, letterboxes on the sides when the strip is shorter
+           than the flyer's natural aspect. Never crops the artwork. */
         .flyer-strip img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
           display: block;
+        }
+        .badge-body {
+          flex: 1 1 auto;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          overflow: hidden;
+        }
+        .badge-qr {
+          flex-shrink: 0;
         }
       `}</style>
 
@@ -169,61 +187,61 @@ export function BulkBadgePrint({ badges, perPage }: Props) {
               <div
                 key={b.id}
                 className="compact-badge"
-                // Fixed height (not min-height) — guarantees exactly N
-                // badges per A4 sheet without content pushing the last
-                // row off the page. Content inside is sized to fit.
                 style={{ height: badgeHeight }}
               >
-                {/* Flyer strip — height is capped so the full badge
-                    always fits. object-cover crops the flyer's centered
-                    strip to fill the available box; the top and bottom
-                    of the artwork get trimmed a hair, but the wording
-                    (INAUGURAL SERVICE / GLORY AHEAD / date) stays. */}
+                {/* Flyer strip — object-contain shows the FULL flyer
+                    inside the strip; letterboxed with white on the
+                    sides when the strip is shorter than the natural
+                    16:9 aspect. Nothing is ever cropped from the
+                    artwork. */}
                 <div className="flyer-strip" style={{ height: flyerHeight }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={FLYER_URL} alt="" />
                 </div>
 
-                {/* Name block — flex-1 fills remaining space between
-                    the fixed flyer above and fixed QR block below. */}
-                <div className="flex flex-1 flex-col items-center justify-center px-3 text-center">
-                  <p
-                    className="font-medium uppercase text-gray-500"
-                    style={{ fontSize: perPage === 8 ? '8px' : '10px', letterSpacing: '0.14em' }}
-                  >
-                    {b.firstName}
-                  </p>
-                  <p
-                    className="font-extrabold leading-tight text-[#000666]"
-                    style={{ fontSize: perPage === 4 ? '18px' : perPage === 6 ? '14px' : '11px' }}
-                  >
-                    {b.lastName}
-                  </p>
-                  {perPage !== 8 && (
+                {/* Body: name (flexible) on top, QR + ID (fixed) at
+                    bottom. min-height:0 + overflow:hidden on body lets
+                    flex shrink the name area if a long lastName pushes
+                    the total taller than the badge — QR stays visible. */}
+                <div className="badge-body px-3 pt-2 pb-2 text-center">
+                  <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
                     <p
-                      className="mt-1 italic text-gray-500"
-                      style={{ fontSize: perPage === 4 ? '10px' : '9px' }}
+                      className="font-medium uppercase text-gray-500 leading-tight"
+                      style={{ fontSize: perPage === 8 ? '7.5px' : '9px', letterSpacing: '0.14em' }}
                     >
-                      {b.subtitle}
+                      {b.firstName}
                     </p>
-                  )}
-                </div>
+                    <p
+                      className="font-extrabold leading-tight text-[#000666] mt-0.5"
+                      style={{ fontSize: perPage === 4 ? '17px' : perPage === 6 ? '13px' : '10.5px' }}
+                    >
+                      {b.lastName}
+                    </p>
+                    {perPage !== 8 && (
+                      <p
+                        className="mt-0.5 italic text-gray-500 leading-tight"
+                        style={{ fontSize: perPage === 4 ? '9px' : '8px' }}
+                      >
+                        {b.subtitle}
+                      </p>
+                    )}
+                  </div>
 
-                {/* QR + ID — anchored at the bottom with tight padding. */}
-                <div className="flex flex-col items-center gap-0.5 px-3 pb-2">
-                  <QRCode
-                    value={b.qrTarget}
-                    size={qrSize}
-                    level="M"
-                    bgColor="#ffffff"
-                    fgColor="#000666"
-                  />
-                  <p
-                    className="font-mono font-bold tracking-wider text-[#000666]"
-                    style={{ fontSize: perPage === 8 ? '8px' : '10px' }}
-                  >
-                    {b.registrationId}
-                  </p>
+                  <div className="badge-qr mt-1 flex flex-col items-center gap-0.5">
+                    <QRCode
+                      value={b.qrTarget}
+                      size={qrSize}
+                      level="M"
+                      bgColor="#ffffff"
+                      fgColor="#000666"
+                    />
+                    <p
+                      className="font-mono font-bold tracking-wider text-[#000666] leading-tight"
+                      style={{ fontSize: perPage === 8 ? '7.5px' : '9.5px' }}
+                    >
+                      {b.registrationId}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
