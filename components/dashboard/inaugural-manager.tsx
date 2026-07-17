@@ -147,9 +147,11 @@ export function InauguralManager({
       firstName: r.firstName,
       lastName: r.lastName,
       subtitle: subtitleFor(r),
-      qrTarget: `${siteUrl}/inaugural-service/programme?id=${encodeURIComponent(
-        r.registrationId
-      )}`,
+      // Scan destination — everyone lands on the same programme portal,
+      // no ?id= query param. The portal itself is the same rich portal
+      // for every guest; personalisation happens on the confirmation
+      // email link (which does still carry ?id=).
+      qrTarget: `${siteUrl}/inaugural-service/programme`,
     })
   }
 

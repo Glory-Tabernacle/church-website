@@ -88,7 +88,9 @@ export default async function BulkPrintPage({ searchParams }: PageProps) {
       firstName: r.firstName,
       lastName: r.lastName,
       subtitle,
-      qrTarget: `${siteUrl}/inaugural-service/programme?id=${encodeURIComponent(registrationId)}`,
+      // Every printed badge scans to the same programme portal — no
+      // ?id= query param. See inaugural-manager.tsx for the rationale.
+      qrTarget: `${siteUrl}/inaugural-service/programme`,
     }
   })
 
