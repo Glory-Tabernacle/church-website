@@ -179,13 +179,15 @@ export function BadgeCard({ data }: { data: BadgeData }) {
         </p>
       </div>
 
-      {/* Footer disclaimer */}
+      {/* Footer disclaimer — copyright + scan-me prompt. Prompt is bold
+          + darker so it reads as a call-to-action next to the QR above,
+          not a legal footnote. */}
       <div
         className="px-6 pb-4 text-center"
         style={{ borderTop: '1px solid rgba(0,6,102,0.06)' }}
       >
-        <p className="mt-3 text-[0.55rem] uppercase tracking-[0.18em] text-gray-400">
-          © RCCG Glory Tabernacle, Barnstaple · Please wear at all times during the service
+        <p className="mt-3 text-[0.6rem] font-extrabold uppercase tracking-[0.2em] text-[#000666]">
+          © RCCG Glory Tabernacle, Barnstaple · Please scan to access programme
         </p>
       </div>
     </div>
