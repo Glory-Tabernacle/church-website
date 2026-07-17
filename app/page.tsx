@@ -193,6 +193,61 @@ async function loadHomepageEvents(): Promise<ChurchEvent[]> {
 }
 
 /**
+ * Combine an Event row's `date` (stored as UTC midnight of the event's
+ * day) with its free-text `time` string ("1:00 PM", "13:00", etc.) into
+ * one Date pointing at the exact moment the event actually starts, in
+ * Europe/London time.
+ *
+ * Without this, the live-stream countdown counts down to UTC midnight of
+ * the event's day — so a "1:00 PM tomorrow" event shows a countdown of
+ * hours-until-midnight rather than hours-until-1pm, which the admin
+ * team spotted as visibly wrong.
+ *
+ * Falls back to the raw date if the time string is missing or
+ * unparseable, so time-less events still get a sensible countdown.
+ */
+function combineEventStart(date: Date, timeStr: string | null): Date {
+  if (!timeStr) return date
+  // Accept "13:00", "1:00 pm", "1 pm", "1:00PM", "9am", etc.
+  const match = timeStr.trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/)
+  if (!match) return date
+  let hours = Number(match[1])
+  const minutes = Number(match[2] ?? 0)
+  const ampm = match[3]
+  if (ampm === 'pm' && hours < 12) hours += 12
+  if (ampm === 'am' && hours === 12) hours = 0
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return date
+
+  // Extract Y-M-D from the DB date using UTC parts — `date` was stored
+  // as UTC midnight of the intended day, so `getUTCFullYear()` etc. give
+  // us the correct wall-calendar day regardless of server timezone.
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth()
+  const day = date.getUTCDate()
+
+  // We now have the London LOCAL wall time (year-month-day hours:minutes).
+  // Convert to the correct UTC instant by asking Intl how the same UTC
+  // candidate reads in London, then applying the offset delta. This
+  // handles BST vs GMT automatically without hardcoded rules or a
+  // timezone library dependency.
+  const candidateUtcMs = Date.UTC(year, month, day, hours, minutes)
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(new Date(candidateUtcMs))
+  const p = (t: string): number => Number(parts.find((pt) => pt.type === t)?.value ?? 0)
+  const londonWallMs = Date.UTC(p('year'), p('month') - 1, p('day'), p('hour'), p('minute'), p('second'))
+  const offsetMs = londonWallMs - candidateUtcMs
+  return new Date(candidateUtcMs - offsetMs)
+}
+
+/**
  * Minimal shape of an Event row used by both the announcement modal
  * and the live-stream section.
  */
@@ -527,7 +582,10 @@ export default async function Home() {
           thumbnailAlt={`${nextEvent.title} thumbnail`}
           isLive={false}
           youtubeLiveHref="https://www.youtube.com/@RCCGGloryTabernacle/live"
-          nextServiceDate={nextEvent.date.toISOString()}
+          // Combine the DB date (UTC midnight) with the admin's free-text
+          // time ("1:00 PM") in Europe/London so the countdown targets
+          // the actual event start, not midnight of that day.
+          nextServiceDate={combineEventStart(nextEvent.date, nextEvent.time).toISOString()}
           subtext={`${nextEvent.title} begins in:`}
           eventId={nextEvent.id}
         />
