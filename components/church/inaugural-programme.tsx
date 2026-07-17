@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, type ComponentType } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   ListOrdered,
@@ -19,6 +20,9 @@ import {
   Compass,
   Flame,
   Target,
+  Play,
+  Pause,
+  CalendarDays,
 } from 'lucide-react'
 
 /**
@@ -108,6 +112,14 @@ const CARDS: CardDef[] = [
     icon: HandCoins,
     accent: 'ivory',
     href: '/giving',
+  },
+  {
+    id: 'upcoming',
+    label: 'Upcoming Programmes',
+    subtitle: "What's next on the calendar",
+    icon: CalendarDays,
+    accent: 'green',
+    href: '/events',
   },
 ]
 
@@ -226,6 +238,13 @@ export function InauguralProgramme({ registrantFirstName }: Props) {
           from { opacity: 0; transform: translateY(28px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
+        /* "Gentle" — slower + smoother than the sheet's own entrance, with
+           a slight delay so the modal settles before the portrait glides
+           in. Used for the pastor + GO photographs. */
+        @keyframes gtGentleGlide {
+          from { opacity: 0; transform: translateY(28px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
         .gt-prog-card {
           animation: gtProgFadeUp 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
         }
@@ -234,6 +253,12 @@ export function InauguralProgramme({ registrantFirstName }: Props) {
         }
         .gt-prog-sheet {
           animation: gtProgSheetIn 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .gt-gentle-image {
+          animation: gtGentleGlide 1100ms cubic-bezier(0.22, 1, 0.36, 1) 240ms both;
+        }
+        .gt-gentle-caption {
+          animation: gtGentleGlide 1100ms cubic-bezier(0.22, 1, 0.36, 1) 460ms both;
         }
       `}</style>
 
@@ -252,8 +277,9 @@ export function InauguralProgramme({ registrantFirstName }: Props) {
         </p>
       </div>
 
-      {/* Card grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Card grid — 3 columns on desktop so nine cards form a clean 3×3
+          block instead of 4×2 with one orphan on a third row. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {CARDS.map((card, index) => (
           <Card
             key={card.id}
@@ -497,38 +523,152 @@ function OrderContent() {
 // Content: Our Story
 // ---------------------------------------------------------------------------
 
+/**
+ * The narration file — same asset used on /about's Our Story section
+ * (see app/about/our-story-section.tsx). Lives at /public/About_us.mp4;
+ * kept as a plain HTML5 <audio> so iOS Safari + Android Chrome play it
+ * without needing a bundled PDF viewer or media player library.
+ */
+const STORY_NARRATION_SRC = '/About_us.mp4'
+
 function StoryContent({ registrantFirstName }: { registrantFirstName: string | null }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  // Sync button state with the audio element's own events so ended /
+  // pause / play from the OS media controls all reflect correctly. Also
+  // pause on unmount so the narration stops the instant the modal closes
+  // — critical UX or the audio would keep talking behind the scenes.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    const handlePlay = () => setIsPlaying(true)
+    const handlePause = () => setIsPlaying(false)
+    const handleEnded = () => setIsPlaying(false)
+
+    audio.addEventListener('play', handlePlay)
+    audio.addEventListener('pause', handlePause)
+    audio.addEventListener('ended', handleEnded)
+
+    return () => {
+      audio.pause()
+      audio.removeEventListener('play', handlePlay)
+      audio.removeEventListener('pause', handlePause)
+      audio.removeEventListener('ended', handleEnded)
+    }
+  }, [])
+
+  function togglePlayback() {
+    const audio = audioRef.current
+    if (!audio) return
+    if (isPlaying) {
+      audio.pause()
+      return
+    }
+    // play() can reject on mobile autoplay policies — but a user tap is
+    // a valid user gesture, so this should always resolve. Defensive
+    // fallback prevents a stranded "playing" state if it ever fails.
+    void audio.play().catch(() => setIsPlaying(false))
+  }
+
   return (
     <div className="space-y-5 text-sm leading-relaxed text-gray-700 md:text-base md:leading-loose">
-      <p className="rounded-xl bg-[#000666]/5 p-5 font-serif text-lg italic leading-relaxed text-[#000666] md:text-xl">
-        Every great move of God begins with a question.
-      </p>
+      {/* Listen strip — audio narrator button + heading. */}
+      <div className="flex items-center justify-between gap-4 rounded-xl bg-[#000666]/5 p-4 sm:p-5">
+        <div className="min-w-0">
+          <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-[#1b6d24]">
+            Our Story
+          </p>
+          <p className="mt-1 font-serif text-base italic text-[#000666] md:text-lg">
+            Every great move of God begins with a question.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={togglePlayback}
+          className="group inline-flex shrink-0 items-center gap-2 rounded-full py-1.5 pl-1.5 pr-4 text-[11px] font-bold uppercase tracking-[0.15em] text-white shadow-md transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--church-green)]"
+          style={{ backgroundColor: 'rgba(0, 6, 102, 1)' }}
+          aria-label={isPlaying ? 'Pause the story' : 'Listen to the story'}
+          aria-pressed={isPlaying}
+        >
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-full"
+            style={{ backgroundColor: 'var(--church-green)', color: '#ffffff' }}
+            aria-hidden="true"
+          >
+            {isPlaying ? (
+              <Pause className="h-3.5 w-3.5" fill="currentColor" />
+            ) : (
+              <Play
+                className="h-3.5 w-3.5"
+                fill="currentColor"
+                style={{ transform: 'translateX(1px)' }}
+              />
+            )}
+          </span>
+          {isPlaying ? 'Pause' : 'Listen'}
+        </button>
+        <audio ref={audioRef} src={STORY_NARRATION_SRC} preload="metadata" />
+      </div>
+
+      {/* Story body — full text from the printed programme, verbatim. */}
       <p>
-        Ours began with this one: what if a church could be more than a Sunday
+        Ours began with this one: What if a church could be more than a Sunday
         gathering? What if it could be a place where people don&apos;t just
-        attend but are <em>furnished</em> unto every good work, <em>transformed</em>
-        {' '}within and without, and sent out to <em>influence</em> the world
-        around them for Jesus Christ?
+        attend but are furnished unto every good work, transformed within and
+        without, and sent out to influence the world around them for Jesus
+        Christ?
       </p>
       <p>
-        That question became a conviction. That conviction became a calling.
-        And that calling became RCCG Glory Tabernacle, Barnstaple — planted in
-        the heart of North Devon with a mandate to liberate God&apos;s people,
-        thereby walking in absolute victory.
+        That question became a conviction, that conviction became a calling,
+        and that calling became The RCCG Glory Tabernacle, Barnstaple, planted
+        in the heart of Barnstaple, North Devon, with a mandate to liberate
+        God&apos;s people, thereby walking in absolute victory.
       </p>
       <p>
         We are a people in pursuit of God&apos;s presence, His purpose, and His
-        glory. Every person who walks through our door carries a destiny too
-        significant to be left unfinished.
+        glory. We believe that every person who walks through our door carries
+        a destiny too significant to be left unfinished. We believe that
+        ordinary people, when they encounter an extraordinary God, they become
+        extraordinary themselves.
       </p>
+
       <blockquote className="border-l-4 border-[#1b6d24] bg-[#1b6d24]/5 px-5 py-4 font-serif text-lg font-bold italic text-[#000666] md:text-xl">
-        We build the Tabernacle. God fills it with His glory. Because <em>you</em>
-        {' '}are the Tabernacle.
+        We build the Tabernacle, God fills it with His Glory. Because you are
+        the <span className="not-italic">TABERNACLE</span>.
       </blockquote>
-      {registrantFirstName && (
-        <p className="text-[#1b6d24]">
-          Welcome home, {registrantFirstName}.
+
+      <p>
+        From our first gathering to where we stand today, one thing has never
+        changed, our hunger for His presence. Because we have learned that when
+        God&apos;s glory rests in a place, atmospheres shift, hearts are
+        convicted unto conversion, thereby resulting to salvation and
+        discipleship of many.
+      </p>
+
+      <p className="font-semibold text-[#000666]">
+        This is not just our story, it is the beginning of yours.
+      </p>
+
+      <p>
+        You may have come broken, but you will not leave broken. You may have
+        come small, but you cannot remain small because nothing small is found
+        in the Tabernacle.
+      </p>
+
+      {/* Closing signature — feels like the end of a printed pamphlet. */}
+      <div className="border-t border-gray-200 pt-5">
+        <p className="text-xl font-extrabold leading-tight text-[#000666] md:text-2xl">
+          Welcome to RCCG Glory Tabernacle,
         </p>
+        <p className="mt-1 text-xs font-bold uppercase tracking-[0.22em] text-[#1b6d24]">
+          Barnstaple, England
+        </p>
+      </div>
+
+      {registrantFirstName && (
+        <p className="text-[#1b6d24]">Welcome home, {registrantFirstName}.</p>
       )}
     </div>
   )
@@ -563,26 +703,43 @@ function RccgContent() {
     },
   ]
 
+  // Timeline of key dates in RCCG history — pulled from the founding
+  // narrative below. Renders as a horizontally-scrollable rail on mobile
+  // and a static grid on desktop.
+  const timeline: { year: string; note: string }[] = [
+    { year: '1927', note: 'Rev. Akindayomi baptised at Church Missionary Society' },
+    { year: '1952', note: 'RCCG founded in Lagos, Nigeria' },
+    { year: '1973', note: 'Dr. E. A. Adeboye joins the church' },
+    { year: '1975', note: 'Adeboye ordained as pastor' },
+    { year: '1980', note: 'Rev. Akindayomi goes to be with the Lord' },
+    { year: '1981', note: 'Adeboye becomes General Overseer' },
+    { year: '2008', note: 'Newsweek names Adeboye one of the 50 most influential people' },
+    { year: '2026', note: 'Adeboye turns 84; Light Up events reach thousands' },
+  ]
+
   return (
-    <div className="space-y-6 text-sm leading-relaxed text-gray-700 md:text-base">
-      <p>
-        We are a parish of the <strong>Redeemed Christian Church of God</strong>{' '}
-        — one of the fastest-growing churches in the world, with members in
-        over 190 nations and still counting. Our local expression at Glory
-        Tabernacle carries the global mandate:
-      </p>
+    <div className="space-y-8 text-sm leading-relaxed text-gray-700 md:text-base">
+      {/* Intro + mandate */}
+      <div className="space-y-4">
+        <p>
+          We are a parish of the <strong>Redeemed Christian Church of God</strong>{' '}
+          — one of the fastest-growing churches in the world, with members in
+          over 190 nations and still counting. Our local expression at Glory
+          Tabernacle carries the global mandate:
+        </p>
+        <ol className="space-y-2">
+          {mandate.map((line, i) => (
+            <li key={line} className="flex gap-3">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c8342e]/10 font-mono text-xs font-bold text-[#c8342e]">
+                {i + 1}
+              </span>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
 
-      <ol className="space-y-2">
-        {mandate.map((line, i) => (
-          <li key={line} className="flex gap-3">
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c8342e]/10 font-mono text-xs font-bold text-[#c8342e]">
-              {i + 1}
-            </span>
-            <span>{line}</span>
-          </li>
-        ))}
-      </ol>
-
+      {/* Pillars — three glanceable cards. */}
       <div className="grid gap-3 sm:grid-cols-3">
         {pillars.map((p) => {
           const Icon = p.icon
@@ -601,6 +758,137 @@ function RccgContent() {
             </div>
           )
         })}
+      </div>
+
+      {/* Founding history — long-form narrative + timeline. Section-title
+          eyebrow separates it from the vision content above. */}
+      <div className="border-t border-gray-100 pt-8">
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-[#c8342e]">
+          Our history
+        </p>
+        <h4 className="mt-2 font-serif text-2xl font-extrabold leading-tight text-[#000666] md:text-3xl">
+          A covenant kept for over seventy years
+        </h4>
+
+        {/* Timeline chips — horizontally scrollable on narrow screens. */}
+        <div className="mt-6 -mx-2 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-2">
+          {timeline.map((t) => (
+            <div
+              key={t.year}
+              className="min-w-[10.5rem] shrink-0 snap-start rounded-xl border border-gray-100 bg-white p-3 shadow-sm"
+            >
+              <p className="font-mono text-lg font-extrabold text-[#c8342e]">
+                {t.year}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-600">{t.note}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Narrative — cleaned + de-duplicated from the printed history. */}
+        <div className="mt-8 space-y-4">
+          <p>
+            The Redeemed Christian Church of God (RCCG) was founded in 1952 in
+            Nigeria, following a divine revelation received by a young man whose
+            heart had been set ablaze with an unquenchable desire to personally
+            encounter the Supreme Being, in spite of a prevailing environment of
+            nature worship.
+          </p>
+          <p>
+            Seeking a fervent relationship with the God he still knew little
+            about at the time, Reverend Josiah Olufemi Akindayomi was fired by
+            the intuition that there was a greater power than those commonly
+            known to his people. This pursuit of God led him to the Church
+            Missionary Society, where he was baptised in 1927. Yet, remaining
+            largely spiritually unfulfilled, he later joined the Cherubim and
+            Seraphim Church, an indigenous African Church that emerged from the
+            Anglican (Episcopal) Church in Nigeria.
+          </p>
+          <p>
+            Reverend Akindayomi&apos;s call as a servant of God began whilst
+            still a member of the Cherubim and Seraphim Church — a prompting he
+            ignored for several years, until repeated business failures brought
+            him to the point of repentance. This season became the turning-point
+            for him in his relationship with God. Humbled, he made the decision
+            to totally yield to God and His purposes, seeking divine
+            confirmation of a call to ministry. The confirmation eventually came
+            through the Holy Scriptures.
+          </p>
+          <p>
+            By 1947, he had also become increasingly concerned about some of the
+            doctrinal beliefs of the Cherubim and Seraphim Church, and became
+            totally persuaded to leave in 1952.
+          </p>
+
+          <blockquote className="border-l-4 border-[#c8342e] bg-[#c8342e]/5 px-5 py-4 font-serif text-base italic leading-relaxed text-[#000666] md:text-lg">
+            The House Fellowship he set up in Lagos soon became the hub of
+            spiritual conversions and remarkable miracles.
+          </blockquote>
+
+          <p>
+            During this period, Rev. Akindayomi — who couldn&apos;t read or
+            write English, not having had a formal education — received a vision
+            in which the words &ldquo;The Redeemed Christian Church of
+            God&rdquo; were written, being the name of the Church that the Lord
+            would establish through him. By supernatural enablement, he was able
+            to write these words, spelling out the name of the Church.
+          </p>
+          <p>
+            In the course of that spiritual encounter, God also revealed that
+            the Church would spread to the ends of the earth, and that when the
+            Lord Jesus Christ appears in glory at the end of the age, He would
+            meet the RCCG. Without doubt, these were extraordinary prophecies to
+            a man with no formal education or great means.
+          </p>
+          <p>
+            Yet, he did not doubt the promises of the Lord but set out in faith
+            to do His will. RCCG was, therefore, set up on the basis of this
+            covenant between God and man: as long as the members of the RCCG
+            remain obedient to God&apos;s Word, the Lord has promised to always
+            miraculously meet the needs of the Church.
+          </p>
+
+          <p>
+            Rev. Akindayomi remained faithful to this heavenly vision until he
+            went to be with the Lord in 1980. Prior to this, sometime in the
+            early 1970s, he had received a message from the Lord about his
+            spiritual successor — a young, educated man who at the time was not
+            a member of the church.
+          </p>
+          <p>
+            Hence, when Dr. Enoch Adejare Adeboye, a young university lecturer
+            in Mathematics, became a member of the Church in 1973, Rev.
+            Akindayomi spiritually discerned that this was the person the Lord
+            had spoken about. Dr. Adeboye soon became involved in the activities
+            of the church and began to serve as an interpreter for Rev.
+            Akindayomi, translating his live sermons from Yoruba to English. The
+            young man was ordained a pastor of the church in 1975.
+          </p>
+
+          <p>
+            As revealed by the Lord, Pastor E. A. Adeboye became the General
+            Overseer of the RCCG in 1981. Under his leadership, RCCG has begun
+            to experience the phenomenal growth promised by the Lord to his
+            predecessor. A man devoted to fervent prayer and known for his
+            unwavering emphasis on holy living as the foundation of a fruitful
+            and enduring relationship with God, Pastor Adeboye is being used by
+            God to bring the message of the gospel to nations around the world.
+          </p>
+          <p>
+            In spite of the miraculous move of God in his ministry, Pastor
+            Adeboye&apos;s humble disposition is widely acknowledged — making
+            him a role model for many the world over. In December 2008,{' '}
+            <em>Newsweek</em> magazine named him one of the 50 most influential
+            people on the planet.
+          </p>
+
+          <p className="font-semibold text-[#000666]">
+            Pastor E. A. Adeboye turned 84 in March 2026 and, from the look of
+            things, he does not seem to be slowing down — with Light Up events
+            continuing across the world and thousands coming to the knowledge
+            of Christ.
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -730,6 +1018,12 @@ const HYMN_VERSES = [
     'Ponder anew what the Almighty can do,',
     'If with His love He befriend thee.',
   ],
+  [
+    'Praise to the Lord! Oh, let all that is in me adore Him!',
+    'All that hath life and breath, come now with praises before Him!',
+    'Let the Amen sound from His people again;',
+    'Gladly for aye we adore Him.',
+  ],
 ]
 
 function HymnsContent() {
@@ -780,19 +1074,34 @@ function HymnsContent() {
 function LeadPastorsContent() {
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-gradient-to-br from-[#000666] to-[#0a1078] p-8 text-center text-white">
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[rgba(163,246,156,1)]">
-          Lead Pastors
-        </p>
-        <h4 className="mt-3 font-serif text-4xl font-extrabold leading-tight md:text-5xl">
-          Seye &amp; Tolu
-          <br />
-          <span className="text-[rgba(163,246,156,1)]">Adebayo</span>
-        </h4>
-        <div className="mx-auto mt-5 h-px w-24 bg-white/30" />
-        <p className="mt-5 text-sm font-semibold uppercase tracking-[0.16em] text-white/80">
-          RCCG Glory Tabernacle, Barnstaple
-        </p>
+      {/* Portrait + name card combined so the image and text feel like one
+          designed object rather than a photo pasted above a caption. The
+          portrait glides in first (240ms delay), then the caption follows
+          (460ms) — a small cascade that reads as intentional, not late. */}
+      <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#000666] via-[#0a1078] to-[#00041f] text-white">
+        <div className="gt-gentle-image relative mx-auto aspect-[4/3] w-full overflow-hidden bg-white/5">
+          <Image
+            src="https://res.cloudinary.com/deckwmsth/image/upload/v1784301376/Artboard_12_j1lsoh.png"
+            alt="Pastors Seye and Tolu Adebayo — Lead Pastors, RCCG Glory Tabernacle, Barnstaple"
+            fill
+            className="object-contain object-center"
+            sizes="(max-width: 640px) 100vw, 640px"
+          />
+        </div>
+        <div className="gt-gentle-caption px-6 pb-8 pt-6 text-center sm:px-8">
+          <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[rgba(163,246,156,1)]">
+            Lead Pastors
+          </p>
+          <h4 className="mt-3 font-serif text-3xl font-extrabold leading-tight md:text-4xl">
+            Seye &amp; Tolu
+            <br />
+            <span className="text-[rgba(163,246,156,1)]">Adebayo</span>
+          </h4>
+          <div className="mx-auto mt-5 h-px w-24 bg-white/30" />
+          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-white/80 md:text-sm">
+            RCCG Glory Tabernacle, Barnstaple
+          </p>
+        </div>
       </div>
 
       <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
@@ -813,19 +1122,33 @@ function LeadPastorsContent() {
 function GoContent() {
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-gradient-to-br from-[#a5252c] via-[#c8342e] to-[#7d1a20] p-8 text-center text-white">
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-white/80">
-          General Overseer
-        </p>
-        <h4 className="mt-3 font-serif text-4xl font-extrabold leading-tight md:text-5xl">
-          Pastor E. A.
-          <br />
-          Adeboye
-        </h4>
-        <div className="mx-auto mt-5 h-px w-24 bg-white/30" />
-        <p className="mt-5 text-sm font-semibold uppercase tracking-[0.16em] text-white/80">
-          Redeemed Christian Church of God
-        </p>
+      {/* Same portrait-then-caption cascade as the Lead Pastors card, in
+          the church-red gradient so the two pages read as siblings from
+          the same design family. */}
+      <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#a5252c] via-[#c8342e] to-[#7d1a20] text-white">
+        <div className="gt-gentle-image relative mx-auto aspect-[4/3] w-full overflow-hidden bg-white/5">
+          <Image
+            src="https://res.cloudinary.com/deckwmsth/image/upload/v1784301380/papa_ukpdm5.png"
+            alt="Pastor E. A. Adeboye — General Overseer, Redeemed Christian Church of God"
+            fill
+            className="object-contain object-center"
+            sizes="(max-width: 640px) 100vw, 640px"
+          />
+        </div>
+        <div className="gt-gentle-caption px-6 pb-8 pt-6 text-center sm:px-8">
+          <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-white/80">
+            General Overseer
+          </p>
+          <h4 className="mt-3 font-serif text-3xl font-extrabold leading-tight md:text-4xl">
+            Pastor E. A.
+            <br />
+            Adeboye
+          </h4>
+          <div className="mx-auto mt-5 h-px w-24 bg-white/30" />
+          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-white/80 md:text-sm">
+            Redeemed Christian Church of God
+          </p>
+        </div>
       </div>
 
       <div className="space-y-3 text-sm leading-relaxed text-gray-700 md:text-base">
@@ -836,6 +1159,13 @@ function GoContent() {
           nations — carrying the same fire that lit the first altar in 1952.
         </p>
         <p>
+          A man devoted to fervent prayer and known for his unwavering emphasis
+          on holy living, Pastor Adeboye is used by God to bring the gospel to
+          nations around the world. In December 2008, <em>Newsweek</em>{' '}
+          magazine named him one of the 50 most influential people on the
+          planet — yet his humble disposition remains a role model for many.
+        </p>
+        <p className="font-semibold text-[#000666]">
           Today we sit under that same covering, part of a house built on
           holiness, prayer, the Word of God, and evangelism.
         </p>
