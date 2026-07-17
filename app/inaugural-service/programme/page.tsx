@@ -12,7 +12,8 @@ import {
   INAUGURAL_SERVICE_TIME,
   INAUGURAL_SERVICE_VENUE,
 } from '@/lib/types/inaugural-registration'
-import { Sparkles, CalendarDays, Clock3, MapPin, Car } from 'lucide-react'
+import { CalendarDays, Clock3, MapPin, Car } from 'lucide-react'
+import { InauguralProgramme } from '@/components/church/inaugural-programme'
 
 const FORMATTED_SERVICE_DATE = INAUGURAL_SERVICE_DATE.toLocaleDateString(
   'en-GB',
@@ -179,28 +180,20 @@ export default async function ProgrammePage({ searchParams }: PageProps) {
           </div>
         </section>
 
-        <section className="px-[var(--section-padding-x)] py-16">
-          <div className="mx-auto max-w-3xl rounded-2xl bg-white px-6 py-12 text-center shadow-[0_18px_50px_rgba(0,6,102,0.08)] md:px-10">
-            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#1b6d24]/10">
-              <Sparkles className="h-7 w-7 text-[#1b6d24]" aria-hidden="true" />
+        <section className="px-[var(--section-padding-x)] py-16 md:py-20">
+          <div className="mx-auto max-w-6xl">
+            <InauguralProgramme
+              registrantFirstName={registrant?.firstName ?? null}
+            />
+
+            <div className="mt-14 text-center">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[#000666] underline-offset-4 hover:underline"
+              >
+                Back to homepage
+              </Link>
             </div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#1b6d24]">
-              Programme coming soon
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold text-[#000666] md:text-4xl">
-              We&apos;re finalising the order of service
-            </h2>
-            <p className="mt-4 text-sm leading-relaxed text-gray-600 md:text-base">
-              {registrant
-                ? `Thank you for registering, ${registrant.firstName}. The full schedule and programme booklet will appear here ahead of the service. Save this page or scan your badge again any time — it&apos;ll update automatically.`
-                : 'The full schedule and programme booklet will appear here ahead of the service. If you registered, scan the QR on your badge to come back and see your personal welcome page.'}
-            </p>
-            <Link
-              href="/"
-              className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[#000666] underline-offset-4 hover:underline"
-            >
-              Back to homepage
-            </Link>
           </div>
         </section>
       </main>
