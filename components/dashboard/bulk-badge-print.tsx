@@ -44,24 +44,39 @@ interface Props {
 const ROWS_PER_PAGE: Record<PerPage, number> = { 4: 2, 6: 3, 8: 4 }
 
 /**
- * A4 usable height after 8mm margins ≈ 281mm. Divide by row count (minus
- * inter-row gaps) to get the min-height each badge needs so exactly N
- * fit on a page and `break-inside: avoid` bumps the (N+1)th to a new page.
+ * A4 usable height after 8mm margins is ~281mm. We aim for 262mm actual
+ * badge area, leaving ~19mm of safety headroom for browser rendering
+ * quirks (some print engines add 1-2mm of extra padding per grid row,
+ * or interpret CSS mm slightly differently from paper mm — either
+ * pushed the bottom-most row's QR + ID off the page in the previous
+ * calculation). The trimmed layout still fills the sheet visually and
+ * prints reliably.
  */
 function badgeHeightMm(perPage: PerPage): number {
   const rows = ROWS_PER_PAGE[perPage]
-  const usable = 281 - (rows - 1) * 6 // 6mm gap between rows
-  return usable / rows
+  const safeUsable = 262
+  return (safeUsable - (rows - 1) * 6) / rows
 }
 
-/** QR pixel size scales with badge size. Minimum ~65px still scans on most
- *  phone cameras at reading distance. */
+/**
+ * Cap the flyer strip so it never devours the badge and pushes QR / ID
+ * out of the printable box. 30% of badge height is the sweet spot:
+ * flyer stays legible, name and QR always have room below.
+ */
+function flyerHeightMm(perPage: PerPage): number {
+  return badgeHeightMm(perPage) * 0.3
+}
+
+/** QR pixel size scales with badge size. Minimum ~55px still scans on most
+ *  phone cameras at reading distance. Sizes tuned down slightly from the
+ *  previous values so the whole QR + ID block fits within the budget. */
 function qrPixelSize(perPage: PerPage): number {
-  return perPage === 4 ? 110 : perPage === 6 ? 82 : 66
+  return perPage === 4 ? 100 : perPage === 6 ? 72 : 56
 }
 
 export function BulkBadgePrint({ badges, perPage }: Props) {
-  const badgeMinHeight = `${badgeHeightMm(perPage).toFixed(2)}mm`
+  const badgeHeight = `${badgeHeightMm(perPage).toFixed(2)}mm`
+  const flyerHeight = `${flyerHeightMm(perPage).toFixed(2)}mm`
   const qrSize = qrPixelSize(perPage)
   const sheetCount = Math.max(1, Math.ceil(badges.length / perPage))
 
@@ -88,9 +103,21 @@ export function BulkBadgePrint({ badges, perPage }: Props) {
           background: white;
           border: 1px solid rgba(0,6,102,0.15);
           border-radius: 6px;
-          overflow: hidden;
+          /* overflow removed from the badge itself so content never
+             gets clipped — sizes are now enforced per-element instead. */
           display: flex;
           flex-direction: column;
+        }
+        .flyer-strip {
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .flyer-strip img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          display: block;
         }
       `}</style>
 
@@ -142,14 +169,24 @@ export function BulkBadgePrint({ badges, perPage }: Props) {
               <div
                 key={b.id}
                 className="compact-badge"
-                style={{ minHeight: badgeMinHeight }}
+                // Fixed height (not min-height) — guarantees exactly N
+                // badges per A4 sheet without content pushing the last
+                // row off the page. Content inside is sized to fit.
+                style={{ height: badgeHeight }}
               >
-                {/* Flyer strip — carries branding + event details */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={FLYER_URL} alt="" className="block h-auto w-full" />
+                {/* Flyer strip — height is capped so the full badge
+                    always fits. object-cover crops the flyer's centered
+                    strip to fill the available box; the top and bottom
+                    of the artwork get trimmed a hair, but the wording
+                    (INAUGURAL SERVICE / GLORY AHEAD / date) stays. */}
+                <div className="flyer-strip" style={{ height: flyerHeight }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={FLYER_URL} alt="" />
+                </div>
 
-                {/* Name block */}
-                <div className="flex-1 px-3 pt-2 text-center">
+                {/* Name block — flex-1 fills remaining space between
+                    the fixed flyer above and fixed QR block below. */}
+                <div className="flex flex-1 flex-col items-center justify-center px-3 text-center">
                   <p
                     className="font-medium uppercase text-gray-500"
                     style={{ fontSize: perPage === 8 ? '8px' : '10px', letterSpacing: '0.14em' }}
@@ -158,7 +195,7 @@ export function BulkBadgePrint({ badges, perPage }: Props) {
                   </p>
                   <p
                     className="font-extrabold leading-tight text-[#000666]"
-                    style={{ fontSize: perPage === 4 ? '18px' : perPage === 6 ? '14px' : '12px' }}
+                    style={{ fontSize: perPage === 4 ? '18px' : perPage === 6 ? '14px' : '11px' }}
                   >
                     {b.lastName}
                   </p>
@@ -172,8 +209,8 @@ export function BulkBadgePrint({ badges, perPage }: Props) {
                   )}
                 </div>
 
-                {/* QR + ID */}
-                <div className="flex flex-col items-center gap-1 px-3 pb-2">
+                {/* QR + ID — anchored at the bottom with tight padding. */}
+                <div className="flex flex-col items-center gap-0.5 px-3 pb-2">
                   <QRCode
                     value={b.qrTarget}
                     size={qrSize}
@@ -183,7 +220,7 @@ export function BulkBadgePrint({ badges, perPage }: Props) {
                   />
                   <p
                     className="font-mono font-bold tracking-wider text-[#000666]"
-                    style={{ fontSize: perPage === 8 ? '9px' : '11px' }}
+                    style={{ fontSize: perPage === 8 ? '8px' : '10px' }}
                   >
                     {b.registrationId}
                   </p>
