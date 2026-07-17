@@ -34,7 +34,14 @@ function getSiteUrl(): string {
     process.env.NEXT_PUBLIC_SITE_URL ??
     process.env.NEXTAUTH_URL ??
     'https://www.glorytabernacle.co.uk'
-  return url.replace(/\/+$/, '')
+  // Strip trailing slash AND canonicalise the apex to the www. host.
+  // Some env configs omit www, but glorytabernacle.co.uk has no DNS
+  // record — only www. does — so bare-domain QRs fail with "site
+  // cannot be reached" when scanned. Force the www. prefix here so
+  // every generated QR / URL is guaranteed to resolve.
+  return url
+    .replace(/\/+$/, '')
+    .replace(/^https:\/\/glorytabernacle\.co\.uk/, 'https://www.glorytabernacle.co.uk')
 }
 
 export default async function InauguralServiceDashboardPage() {

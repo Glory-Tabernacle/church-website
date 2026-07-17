@@ -42,7 +42,12 @@ function getSiteUrl(): string {
     process.env.NEXT_PUBLIC_SITE_URL ??
     process.env.NEXTAUTH_URL ??
     'https://www.glorytabernacle.co.uk'
-  return url.replace(/\/+$/, '')
+  // See app/(dashboard)/dashboard/inaugural-service/page.tsx for rationale —
+  // bare glorytabernacle.co.uk has no DNS, so we force www. on every QR
+  // in the bulk print sheet, regardless of what env vars are set to.
+  return url
+    .replace(/\/+$/, '')
+    .replace(/^https:\/\/glorytabernacle\.co\.uk/, 'https://www.glorytabernacle.co.uk')
 }
 
 interface PageProps {
