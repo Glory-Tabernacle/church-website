@@ -470,21 +470,17 @@ export function InauguralManager({
 }
 
 /**
- * Small modal that asks how many badges to print per A4 sheet, then
- * opens the /print route with that setting in a new tab. Kept inline
- * here because it's only used from this manager — no need for its own
- * file yet.
+ * Confirm modal that opens the /print route in a new tab. Simplified
+ * from the earlier "4 / 6 / 8 per page" density picker because every
+ * badge now prints at the same full size (matching the single-badge
+ * preview), two side by side on A4. Roughly four badges land per A4
+ * sheet — the browser handles the exact pagination.
+ *
+ * `?perPage=4` is preserved in the URL for backwards compatibility with
+ * the print route, but the print sheet ignores it internally.
  */
 function PrintPickerModal({ onClose }: { onClose: () => void }) {
-  const [perPage, setPerPage] = useState<PerPage>(4)
-
-  const options: { value: PerPage; hint: string }[] = [
-    { value: 4, hint: '2 × 2 grid — largest badges, easiest to cut and hand out' },
-    { value: 6, hint: '2 × 3 grid — a balanced size, fewer sheets to print' },
-    { value: 8, hint: '2 × 4 grid — most compact, uses the least paper' },
-  ]
-
-  const printUrl = `/dashboard/inaugural-service/print?perPage=${perPage}`
+  const printUrl = `/dashboard/inaugural-service/print?perPage=4`
 
   return (
     <div
@@ -503,40 +499,20 @@ function PrintPickerModal({ onClose }: { onClose: () => void }) {
             Print all badges
           </h3>
           <p className="mt-1 text-sm text-gray-600">
-            Choose how many badges you&apos;d like on each A4 sheet. The next
-            screen will show a preview and open the browser&apos;s print dialog.
+            Every badge prints at full size — same layout as the single-badge
+            preview, two side by side on A4. Roughly four badges fit per sheet.
           </p>
         </div>
 
-        <div className="space-y-2 px-6 py-5">
-          {options.map((opt) => {
-            const active = perPage === opt.value
-            return (
-              <label
-                key={opt.value}
-                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                  active
-                    ? 'border-[#000666] bg-[#000666]/5'
-                    : 'border-gray-200 hover:border-[#000666]/50'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="perPage"
-                  value={opt.value}
-                  checked={active}
-                  onChange={() => setPerPage(opt.value)}
-                  className="mt-1 h-4 w-4 border-gray-400 text-[#000666] focus:ring-[#000666]"
-                />
-                <div>
-                  <p className="text-sm font-bold text-gray-900">
-                    {opt.value} per page
-                  </p>
-                  <p className="mt-0.5 text-xs text-gray-500">{opt.hint}</p>
-                </div>
-              </label>
-            )
-          })}
+        <div className="px-6 py-5">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+            <p className="font-semibold text-[#000666]">Before you print</p>
+            <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-gray-600">
+              <li>&bull; In the browser print dialog, choose <strong>Portrait</strong>.</li>
+              <li>&bull; Set <strong>Scale</strong> to <strong>100%</strong> — not &ldquo;Fit to page&rdquo;.</li>
+              <li>&bull; Turn <strong>Headers &amp; footers</strong> off if you can.</li>
+            </ul>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-6 py-4">
