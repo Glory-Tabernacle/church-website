@@ -23,7 +23,18 @@ import {
   Play,
   Pause,
   CalendarDays,
+  FileText,
 } from 'lucide-react'
+
+/**
+ * The full printed programme booklet as a PDF, hosted on Cloudinary.
+ * Opened in a new tab from the "View Programme Booklet" CTA below the
+ * card grid — new-tab means iOS Safari / Android Chrome / desktop
+ * browsers all use their own built-in PDF viewer, which reads well on
+ * any device without us shipping a viewer library.
+ */
+const PROGRAMME_PDF_URL =
+  'https://res.cloudinary.com/deckwmsth/image/upload/v1784302738/ORDER_OF_SERVICE_y6xiqr.pdf'
 
 /**
  * Interactive programme portal for /inaugural-service/programme.
@@ -289,6 +300,40 @@ export function InauguralProgramme({ registrantFirstName }: Props) {
           />
         ))}
       </div>
+
+      {/* Capstone CTA — full-width Programme Booklet link. Sits BELOW the
+          grid rather than inside it because it's the "big final action":
+          nine tap-cards to explore, one PDF booklet to take away.
+          Animates in after every grid card so the cascade ends here. */}
+      <a
+        href={PROGRAMME_PDF_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="gt-prog-card group mt-4 flex items-center justify-between gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-[#000666] via-[#0a1078] to-[#00041f] p-5 shadow-[0_16px_50px_-16px_rgba(0,6,102,0.55)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_70px_-20px_rgba(0,6,102,0.75)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a3f69c] focus-visible:ring-offset-2 sm:mt-6 sm:p-7"
+        style={{ animationDelay: `${CARDS.length * 80}ms` }}
+        aria-label="View the full programme booklet (opens in a new tab)"
+      >
+        <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 sm:h-14 sm:w-14">
+            <FileText className="h-5 w-5 text-[rgba(163,246,156,1)] sm:h-6 sm:w-6" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[rgba(163,246,156,1)]">
+              Order of Service · PDF
+            </p>
+            <h3 className="mt-1 text-lg font-extrabold leading-tight text-white sm:text-xl md:text-2xl">
+              View Programme Booklet
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-white/70 sm:text-sm">
+              The full printed programme. Reads beautifully on any device —
+              phone, tablet, or laptop.
+            </p>
+          </div>
+        </div>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 transition-all duration-300 group-hover:bg-[rgba(163,246,156,1)] group-hover:text-[#000666] sm:h-12 sm:w-12">
+          <ArrowUpRight className="h-4 w-4 text-white transition-all duration-300 group-hover:text-[#000666] sm:h-5 sm:w-5" />
+        </div>
+      </a>
 
       {/* Modal — one at a time, driven by `selected`. */}
       {selected && (
