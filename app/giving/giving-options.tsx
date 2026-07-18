@@ -152,7 +152,7 @@ function CardPane() {
           Give by card
         </p>
         <h3 className="mt-2 text-2xl font-extrabold text-[#000666] md:text-3xl">
-          Sow a seed securely
+         Send in your givings securely
         </h3>
         <p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">
           A one-off gift, a monthly standing gift, this Sunday&rsquo;s offering,
