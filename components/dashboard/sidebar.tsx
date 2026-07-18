@@ -171,6 +171,19 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    id: 'donations',
+    roles: CONTENT_ONLY,
+    label: 'Donations',
+    href: '/dashboard/donations',
+    icon: (
+      // Card + heart — sits well alongside the ticket-style Inaugural
+      // Service icon in the sidebar.
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9v9A2.25 2.25 0 004.5 20.25h15A2.25 2.25 0 0021.75 18V6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 002.25 6v3zm4.5 6h3m-3 3h6" />
+      </svg>
+    ),
+  },
+  {
     id: 'groups',
     roles: CONTENT_ONLY,
     label: 'Groups & Ministries',

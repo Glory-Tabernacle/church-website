@@ -867,3 +867,72 @@ model InformationItem {
   @@index([category])
   @@index([createdAt])
 }
+
+// =========================================================================
+// Donations — card giving via Stripe
+// =========================================================================
+//
+// A `Donation` row is created in one of two states:
+//   1. `PENDING` — inserted from POST /api/donations/create-checkout-session
+//      right before we redirect the donor to Stripe Checkout. Carries the
+//      donor's Gift Aid declaration, chosen gift type, and stripe session
+//      id so we can later reconcile.
+//   2. `SUCCEEDED` / `FAILED` — flipped by the /api/webhooks/stripe
+//      handler when Stripe posts back the outcome. `SUCCEEDED` triggers
+//      the donor receipt email.
+//
+// Amounts are stored in PENCE (int) to avoid float rounding — £50 = 5000.
+model Donation {
+  id                    String   @id @default(cuid())
+  // Human-readable receipt number (e.g. "GT-D-2026-0001"). Generated
+  // sequentially per Postgres autoincrement of `receiptNumber`. Shown on
+  // the confirmation email and dashboard.
+  receiptNumber         Int      @default(autoincrement()) @unique
+  // Donor details
+  firstName             String
+  lastName              String
+  email                 String
+  phoneNumber           String?
+  // Gift type — controls the Stripe mode (payment vs subscription) and
+  // shows up as a category in the dashboard.
+  giftType              DonationType
+  // Amount in PENCE. £50 → 5000. Stripe reports the exact charged amount
+  // in this same field once webhook resolves.
+  amountPence           Int
+  currency              String   @default("gbp")
+  // Optional per-gift note the donor left ("For the building project").
+  note                  String?  @db.Text
+  // Gift Aid — UK taxpayers can add 25% at no cost to them. Church
+  // needs the address on file to submit to HMRC.
+  giftAidClaimed        Boolean  @default(false)
+  giftAidAddressLine1   String?
+  giftAidPostcode       String?
+  // Stripe references
+  stripeSessionId       String?  @unique
+  stripePaymentIntentId String?  @unique
+  stripeSubscriptionId  String?  @unique // recurring only
+  // Payment state
+  status                DonationStatus @default(PENDING)
+  paidAt                DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([status])
+  @@index([giftType])
+  @@index([createdAt])
+  @@index([email])
+}
+
+enum DonationType {
+  ONE_OFF          // One-time gift
+  MONTHLY          // Recurring monthly standing gift
+  SUNDAY_OFFERING  // Weekly Sunday offering (one-off but categorised)
+  FREEWILL         // General freewill / sowing / seed
+}
+
+enum DonationStatus {
+  PENDING    // Stripe session created, awaiting payment
+  SUCCEEDED  // Payment confirmed by webhook
+  FAILED     // Payment failed / cancelled at Stripe
+  REFUNDED   // Manually refunded via Stripe dashboard
+}

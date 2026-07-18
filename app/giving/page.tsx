@@ -3,6 +3,7 @@ import { Building2, Globe, CreditCard, Landmark, Smartphone, Users } from 'lucid
 import { TopNavBar } from '@/components/church/nav-bar'
 import { Footer } from '@/components/church/footer'
 import { NewsletterForm } from '@/components/church/newsletter-form'
+import { GiveByCardForm } from './give-by-card-form'
 
 // ---------------------------------------------------------------------------
 // Giving method cards
@@ -120,9 +121,7 @@ export default function GivingPage() {
               />
             </div>
 
-            {/* Bank Transfer UK — sole active giving method for now.
-                Additional methods live below this grid commented out;
-                un-comment as they get rolled out. */}
+            {/* Bank Transfer UK */}
             <GivingCard>
               <CardHeader
                 icon={<Building2 className="h-4 w-4" style={{ color: 'rgba(0,6,102,1)' }} />}
@@ -213,6 +212,43 @@ export default function GivingPage() {
             </GivingCard> */}
 
           </div>
+        </div>
+      </section>
+
+      {/* ── Give by Card (Stripe) ── */}
+      <section
+        className="w-full py-14 px-[var(--section-padding-x)]"
+        style={{ backgroundColor: '#ffffff' }}
+      >
+        <div className="mx-auto max-w-[var(--container-max)]">
+          <div className="mb-8 flex flex-col items-center gap-3 text-center">
+            <h2
+              className="text-2xl font-extrabold md:text-3xl"
+              style={{ color: 'rgba(0,6,102,1)' }}
+            >
+              Give by card
+            </h2>
+            <p className="max-w-xl text-sm leading-relaxed text-gray-500">
+              A one-off gift, a monthly standing gift, this Sunday&rsquo;s
+              offering, or freewill / seed — pay securely by card with just a
+              few taps. If you&rsquo;re a UK taxpayer you can add Gift Aid at no
+              extra cost.
+            </p>
+          </div>
+          <GiveByCardForm />
+
+          {/* "Already a monthly donor?" — quiet link so people know how
+              to update their card or cancel without emailing the church. */}
+          <p className="mt-6 text-center text-xs text-gray-500">
+            Already a monthly donor?{' '}
+            <a
+              href="/giving/manage"
+              className="font-semibold text-[#000666] underline-offset-4 hover:underline"
+            >
+              Manage your gift
+            </a>
+            .
+          </p>
         </div>
       </section>
 
