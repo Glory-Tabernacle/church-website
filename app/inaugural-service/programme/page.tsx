@@ -11,9 +11,12 @@ import {
   INAUGURAL_THEME,
   INAUGURAL_SERVICE_TIME,
   INAUGURAL_SERVICE_VENUE,
+  INAUGURAL_PROGRAMME_REVEAL_AT,
 } from '@/lib/types/inaugural-registration'
 import { CalendarDays, Clock3, MapPin, Car } from 'lucide-react'
 import { InauguralProgramme } from '@/components/church/inaugural-programme'
+import { ProgrammeReveal } from '@/components/church/programme-reveal'
+import { LightUpGallery } from '@/components/church/light-up-gallery'
 
 const FORMATTED_SERVICE_DATE = INAUGURAL_SERVICE_DATE.toLocaleDateString(
   'en-GB',
@@ -58,18 +61,36 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-  searchParams: Promise<{ id?: string }>
+  searchParams: Promise<{
+    id?: string
+    /** Testing override: `?test_reveal_in=300` sets the curtain to open
+     *  300 seconds (5 minutes) from THIS request. Absent → production
+     *  reveal time (30 minutes before the service). */
+    test_reveal_in?: string
+  }>
 }
 
 /**
- * Programme landing page hit when a badge's QR code is scanned. Today it's
- * a placeholder — verifies the registration ID exists, welcomes the
- * registrant by name, and tells them the schedule is coming soon. The real
- * schedule + booklet UI will replace the placeholder content below without
- * needing changes to the badge or the URL pattern.
+ * Programme landing page hit when a badge's QR code is scanned. Behind
+ * the curtain it's the rich interactive portal (order of service,
+ * story, hymns, pastors, etc.). Before the reveal time it shows a live
+ * countdown.
  */
 export default async function ProgrammePage({ searchParams }: PageProps) {
-  const { id } = await searchParams
+  const { id, test_reveal_in: testRevealIn } = await searchParams
+
+  // Curtain reveal moment. Query param `?test_reveal_in=<seconds>` lets us
+  // preview the countdown → curtain-parting animation without waiting for
+  // the actual service. Only accepted between 1 second and 24 hours to
+  // stop accidental typos ending up as "reveal in 1000 years".
+  let revealAtIso = INAUGURAL_PROGRAMME_REVEAL_AT.toISOString()
+  if (testRevealIn) {
+    const secs = Number(testRevealIn)
+    if (Number.isFinite(secs) && secs >= 1 && secs <= 24 * 60 * 60) {
+      revealAtIso = new Date(Date.now() + secs * 1000).toISOString()
+    }
+  }
+
   const eventDate = INAUGURAL_SERVICE_DATE.toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
@@ -180,11 +201,18 @@ export default async function ProgrammePage({ searchParams }: PageProps) {
           </div>
         </section>
 
+        {/* ── Light Up Barnstaple — yesterday's evangelism recap ── */}
+        <section className="bg-white px-[var(--section-padding-x)] py-14 md:py-16">
+          <LightUpGallery />
+        </section>
+
         <section className="px-[var(--section-padding-x)] py-16 md:py-20">
           <div className="mx-auto max-w-6xl">
-            <InauguralProgramme
-              registrantFirstName={registrant?.firstName ?? null}
-            />
+            <ProgrammeReveal revealAt={revealAtIso}>
+              <InauguralProgramme
+                registrantFirstName={registrant?.firstName ?? null}
+              />
+            </ProgrammeReveal>
 
             <div className="mt-14 text-center">
               <Link

@@ -23,6 +23,23 @@ export const INAUGURAL_THEME = {
  *  rather than parsed off the date so the format stays consistent. */
 export const INAUGURAL_SERVICE_TIME = '1:00pm'
 
+/**
+ * Moment the /inaugural-service/programme page reveals the interactive
+ * cards. Before this timestamp visitors see a countdown; at this
+ * timestamp a curtain-parting animation plays and the cards become
+ * interactive. Production value is 30 minutes before the service
+ * begins (12:30 BST on Sun 19 July 2026).
+ *
+ * To test the flow without waiting until Sunday, visit the programme
+ * page with `?test_reveal_in=<seconds>` — e.g. `?test_reveal_in=300`
+ * for a 5-minute countdown from the moment you load the page. The
+ * override is handled by the page's server component (see there for
+ * the logic); this constant stays as the production default.
+ */
+export const INAUGURAL_PROGRAMME_REVEAL_AT = new Date(
+  '2026-07-19T12:45:00+01:00'
+)
+
 /** Venue details displayed on the registration page hero, confirmation
  *  email, programme page, and homepage CTA. Single source of truth so the
  *  address (and the parking note) only needs editing in one place. */
