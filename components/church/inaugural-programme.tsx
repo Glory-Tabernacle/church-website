@@ -24,6 +24,7 @@ import {
   Pause,
   CalendarDays,
   FileText,
+  ScrollText,
 } from 'lucide-react'
 
 /**
@@ -41,7 +42,7 @@ const PROGRAMME_PDF_URL =
  *
  * A grid of tap-cards, each opening a designed modal sheet with the
  * corresponding content (order of service, our story, RCCG, DNA, hymns,
- * pastors, GO, give). Inspired by the RCCG COMC 2026 portal concept but
+ * confession, pastors, GO, give). Inspired by the RCCG COMC 2026 portal concept but
  * rebuilt with cleaner gradients, staggered mount animations, and a
  * proper scale+fade modal.
  *
@@ -101,6 +102,13 @@ const CARDS: CardDef[] = [
     subtitle: 'Songs we sing together',
     icon: Music,
     accent: 'green',
+  },
+  {
+    id: 'confession',
+    label: 'Confession',
+    subtitle: 'Glory Tabernacle Confession',
+    icon: ScrollText,
+    accent: 'navy',
   },
   {
     id: 'lead-pastors',
@@ -507,6 +515,8 @@ function ModalContent({
       return <DnaContent />
     case 'hymns':
       return <HymnsContent />
+    case 'confession':
+      return <ConfessionContent />
     case 'lead-pastors':
       return <LeadPastorsContent />
     case 'go':
@@ -1107,6 +1117,52 @@ function HymnsContent() {
             ))}
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Content: Confession
+// ---------------------------------------------------------------------------
+
+const CONFESSION_PARAGRAPHS = [
+  'Father, Your son, Seye Adebayo, is eternally grateful. Thank You for the gift of Your Son, Jesus Christ, through whom I have received salvation, righteousness, and eternal life.',
+  'Souls are saved through me, leaders are raised through me, nations are impacted through me and the Kingdom of God advances through my obedience.',
+  'I am the breaker in my lineage, every evil pattern, limitation, and generational cycle terminates with me because I am the tabernacle that carries the glory of God.',
+  'The gate of this land is opened unto me, I receive access to the gift of men, kings, helpers, and destiny partners are drawn to me by divine orchestration.',
+  'I reject laziness, I walk in diligence, I receive wisdom, knowledge, understanding, and divine strategy. I know what to do, how to do it, when to do it, and I obtain maximum productivity. No to wrong association.',
+  'My mind is sound, my health is preserved, I think right, I speak right, I act right, I am who God says I am.',
+  'I am not a failure, therefore, nothing fails in my hands. I am not a loser, therefore, I lose nothing that God has entrusted to me.',
+  'I walk in excellence, integrity is my lifestyle. Faithfulness is my nature, I am faithful at work, at home, in church, I represent Christ with honour in every place.',
+  'The vision God has committed into my hands shall become reality, my eyes are opened to opportunities, my ears are opened to hear the voice of the Holy Spirit, I walk circumspectly, and even my mistakes are turned into testimonies by the mercy of God.',
+  'Hear me, devil take off your ugly hands from my life, my family, my ministry, and all that belongs to me. I am in Christ, and Christ is in me, the hope of glory.',
+  'I reject doubt, fear, anxiety, depression, confusion, and every imagination contrary to the knowledge of Christ. My atmosphere is saturated with faith, peace, joy, and confidence in God.',
+  'The Lord is my Anchor, my Shield, my Banner, my Deliverer, my Helper, my Strength, my Wisdom, and my exceedingly great Reward.',
+  'The oil of gladness rests upon me, you see me, you favour me, you hear about me, you are compelled to bless me, my words are seasoned with wisdom, grace, and life.',
+  'I receive power and authority over all devils, and to cure diseases, so nothing dies in my hands. Everything committed into my care flourishes.',
+  'My gaze is fixed on eternity, so no devil, scheme, circumstance, distraction, or worldly attraction can shift my gaze away from Jesus. I will finish my race with joy and stand before Him in glory.',
+  'I am thoroughly FURNISHED unto every good work, continually TRANSFORMED within and without, and empowered to INFLUENCE the marketplace.',
+  'This is glory tabernacle, I am the tabernacle built to pattern to carry His divine presence, splendour and majesty to influence the market.',
+]
+
+function ConfessionContent() {
+  return (
+    <div className="space-y-5">
+      <p className="text-sm leading-relaxed text-gray-600 md:text-base">
+        Declare this confession with faith. Speak it aloud from your heart.
+      </p>
+
+      <div className="space-y-4 text-sm leading-relaxed text-gray-800 md:text-base md:leading-loose">
+        {CONFESSION_PARAGRAPHS.map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-[#1b6d24]/30 bg-[#1b6d24]/5 px-5 py-4 text-center">
+        <p className="font-serif text-base font-bold italic text-[#000666] md:text-lg">
+          Now pray in the Holy Ghost for few minutes.
+        </p>
       </div>
     </div>
   )
