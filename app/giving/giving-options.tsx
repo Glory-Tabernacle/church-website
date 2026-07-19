@@ -31,13 +31,13 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  {
-    id: 'card',
-    label: 'Give by card',
-    subtitle: 'One-off, monthly, or offering',
-    icon: CreditCard,
-    pill: 'Recommended',
-  },
+  // {
+  //   id: 'card',
+  //   label: 'Give by card',
+  //   subtitle: 'One-off, monthly, or offering',
+  //   icon: CreditCard,
+  //   pill: 'Recommended',
+  // },
   {
     id: 'bank',
     label: 'Bank transfer',
