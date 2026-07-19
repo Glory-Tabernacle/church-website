@@ -31,13 +31,13 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  // {
-  //   id: 'card',
-  //   label: 'Give by card',
-  //   subtitle: 'One-off, monthly, or offering',
-  //   icon: CreditCard,
-  //   pill: 'Recommended',
-  // },
+  {
+    id: 'card',
+    label: 'Give by card',
+    subtitle: 'One-off, monthly, or offering',
+    icon: CreditCard,
+    pill: 'Recommended',
+  },
   {
     id: 'bank',
     label: 'Bank transfer',
@@ -155,7 +155,7 @@ function CardPane() {
          Send in your givings securely
         </h3>
         <p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">
-          A one-off gift, a monthly standing gift, this Sunday&rsquo;s offering,
+          Sunday&rsquo;s offering,
           or freewill / seed — pay securely by card in seconds. UK taxpayers can
           add Gift Aid at no extra cost.
         </p>
