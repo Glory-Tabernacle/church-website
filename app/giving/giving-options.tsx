@@ -156,8 +156,7 @@ function CardPane() {
         </h3>
         <p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">
           Sunday&rsquo;s offering,
-          or freewill / seed — pay securely by card in seconds. UK taxpayers can
-          add Gift Aid at no extra cost.
+          or freewill / seed — pay securely by card in seconds.
         </p>
       </div>
       <GiveByCardForm />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { CreditCard, Heart, Loader2, Lock, Sparkles } from 'lucide-react'
+import { CreditCard, Heart, Loader2, Lock } from 'lucide-react'
 import {
   DONATION_TYPE_META,
   DONATION_PRESET_AMOUNTS_PENCE,
@@ -13,7 +13,7 @@ import {
  * Give by Card — the public form that starts a Stripe Checkout session.
  *
  * Flow:
- *   1. Donor picks gift type + amount + fills details (+ Gift Aid).
+ *   1. Donor picks gift type + amount + fills details.
  *   2. Submit posts to /api/donations/create-checkout-session.
  *   3. API returns { url }; we redirect to Stripe's hosted checkout.
  *   4. On success, Stripe redirects back to /giving/success.
@@ -28,7 +28,6 @@ export function GiveByCardForm() {
   const [amountPence, setAmountPence] = useState<number>(2000) // £20 default
   const [customMode, setCustomMode] = useState(false)
   const [customAmount, setCustomAmount] = useState('')
-  const [giftAidClaimed, setGiftAidClaimed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -73,13 +72,6 @@ export function GiveByCardForm() {
       giftType,
       amountPence,
       note: String(fd.get('note') ?? '') || undefined,
-      giftAidClaimed,
-      giftAidAddressLine1: giftAidClaimed
-        ? String(fd.get('giftAidAddressLine1') ?? '')
-        : undefined,
-      giftAidPostcode: giftAidClaimed
-        ? String(fd.get('giftAidPostcode') ?? '')
-        : undefined,
     }
 
     setIsSubmitting(true)
@@ -252,49 +244,6 @@ export function GiveByCardForm() {
             />
           </label>
         </div>
-      </section>
-
-      {/* Gift Aid */}
-      <section className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-5">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={giftAidClaimed}
-            onChange={(e) => setGiftAidClaimed(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-gray-400 text-[#1b6d24] focus:ring-[#1b6d24]"
-          />
-          <span>
-            <span className="flex items-center gap-1.5 text-sm font-bold text-[#000666]">
-              <Sparkles className="h-4 w-4 text-[#1b6d24]" aria-hidden="true" />
-              Add Gift Aid — turn every £1 into £1.25 at no extra cost
-            </span>
-            <span className="mt-1 block text-xs leading-relaxed text-gray-600">
-              I am a UK taxpayer and I want RCCG Glory Tabernacle, Barnstaple to
-              reclaim tax on this and future donations. I understand that if I pay
-              less Income Tax and/or Capital Gains Tax than the amount of Gift Aid
-              claimed on all my donations in the tax year, it is my responsibility
-              to pay any difference.
-            </span>
-          </span>
-        </label>
-        {giftAidClaimed && (
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[2fr_1fr]">
-            <Field
-              name="giftAidAddressLine1"
-              label="First line of your address"
-              placeholder="e.g. 12 High Street"
-              autoComplete="address-line1"
-              required
-            />
-            <Field
-              name="giftAidPostcode"
-              label="Postcode"
-              placeholder="EX31 …"
-              autoComplete="postal-code"
-              required
-            />
-          </div>
-        )}
       </section>
 
       {error && (
