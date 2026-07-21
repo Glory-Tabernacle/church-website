@@ -7,6 +7,8 @@ import { BookLibrary } from './book-library'
 import { prisma } from '@/lib/prisma'
 import type { Book } from '@/lib/types/book'
 
+export const dynamic = 'force-dynamic'
+
 export default async function BooksPage() {
   // Fetch published books from database
   let books: Book[] = []

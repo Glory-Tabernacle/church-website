@@ -6,6 +6,8 @@ import { TractGrid } from './tract-grid'
 import { prisma } from '@/lib/prisma'
 import type { Tract } from '@/lib/types/tract'
 
+export const dynamic = 'force-dynamic'
+
 export default async function TractsPage() {
   // Fetch published tracts from database
   let tracts: Tract[] = []

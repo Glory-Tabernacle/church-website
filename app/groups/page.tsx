@@ -4,6 +4,8 @@ import { Footer } from '@/components/church/footer'
 import { GroupsClient } from './groups-client'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 interface Group {
   id: string
   title: string

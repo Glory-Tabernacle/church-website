@@ -6,6 +6,8 @@ import { NewsletterForm } from '@/components/church/newsletter-form'
 import { prisma } from '@/lib/prisma'
 import { SermonGrid, type PublicSermon } from './sermon-grid'
 
+export const dynamic = 'force-dynamic'
+
 type SermonRow = {
   id: string
   title: string
