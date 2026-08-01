@@ -209,7 +209,38 @@ export function TestimoniesPageClient({
               them, and if He&rsquo;s done something for you too — add
               yours.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row md:mt-10">
+            {/* Scripture banner */}
+        <div className="mx-auto mt-8 max-w-2xl">
+          <div
+            className="relative overflow-hidden rounded-2xl px-7 py-6 text-center shadow-[0_8px_32px_-8px_rgba(0,6,102,0.28)]"
+            style={{
+              background: 'linear-gradient(135deg, #000666 0%, #1e1b7a 50%, #1b6d24 100%)',
+            }}
+          >
+            {/* decorative quote marks */}
+            <span
+              className="pointer-events-none absolute left-3 top-2 font-serif text-7xl font-black leading-none text-white/10 select-none"
+              aria-hidden="true"
+            >
+              &ldquo;
+            </span>
+            <span
+              className="pointer-events-none absolute bottom-2 right-3 font-serif text-7xl font-black leading-none text-white/10 select-none"
+              aria-hidden="true"
+            >
+              &rdquo;
+            </span>
+            <p className="relative font-serif text-base font-semibold italic leading-relaxed text-white md:text-lg">
+              And they overcame him by the blood of the Lamb, and by the word
+              of their testimony; and they loved not their lives unto the death.
+            </p>
+            <p className="relative mt-3 text-xs font-black uppercase tracking-[0.28em] text-[#a3f69c]">
+              Revelation 12:11
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row md:mt-10">
               <button
                 type="button"
                 onClick={scrollToForm}
@@ -416,7 +447,7 @@ function EmptyState({ onShareClick }: { onShareClick: () => void }) {
       </h2>
       <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-gray-600 md:text-base">
         No testimonies have been shared yet. If God has touched your life
-        through this house, we&rsquo;d love to hear about it — your story
+        through this house, we&rsquo;d love to hear about it — your testimony
         may be the one that lifts someone else&rsquo;s faith today.
       </p>
       <button
