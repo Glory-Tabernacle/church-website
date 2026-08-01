@@ -201,7 +201,7 @@ export function TestimoniesPageClient({
               Testimonies
             </p>
             <h1 className="mt-4 font-serif text-4xl font-extrabold leading-tight text-[#000666] md:text-6xl">
-              Real stories, real God
+              Real testimonies, real God
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-gray-600 md:text-lg">
               Every card below is a word from someone whose life Jesus
@@ -221,7 +221,7 @@ export function TestimoniesPageClient({
               {testimonies.length > 0 && (
                 <span className="text-xs font-bold uppercase tracking-[0.28em] text-gray-400 md:text-sm">
                   {testimonies.length}{' '}
-                  {testimonies.length === 1 ? 'story' : 'stories'} shared
+                  {testimonies.length === 1 ? 'testimony' : 'testimonies'} shared
                 </span>
               )}
             </div>
@@ -536,7 +536,7 @@ function SubmitForm() {
           What has God done for you?
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-gray-600 md:text-base">
-          Your story will be reviewed by our team before it appears on
+          Your testimony will be reviewed by our team before it appears on
           this page. Please write in your own words.
         </p>
       </div>
