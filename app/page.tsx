@@ -592,7 +592,7 @@ export default async function Home() {
       )}
       {/* Inaugural service CTA — high-priority, sits right after the
           countdown so it gets a prominent slot above the About section. */}
-      <InauguralServiceCta />
+      {/* <InauguralServiceCta /> */}
       <AboutSection
         eyebrow="Our Foundation"
         heading="A Tabernacle for His Glory"
