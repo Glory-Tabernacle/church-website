@@ -80,11 +80,14 @@ function useCountdown(targetDate: string): TimeLeft {
 
 function CountdownBox({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex min-w-[3.5rem] flex-col items-center rounded-md border border-[var(--church-navy)] px-2.5 py-1.5">
-      <span className="text-xl font-bold leading-none text-[var(--church-navy)]">
+    <div
+      className="flex min-w-[3.75rem] flex-col items-center rounded-xl px-3 py-2.5"
+      style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(163,246,156,0.2)' }}
+    >
+      <span className="text-2xl font-extrabold leading-none text-white">
         {String(value).padStart(2, '0')}
       </span>
-      <span className="mt-1 text-[0.55rem] font-semibold uppercase tracking-widest text-muted-foreground">
+      <span className="mt-1 text-[0.55rem] font-bold uppercase tracking-widest" style={{ color: 'rgba(163,246,156,0.7)' }}>
         {label}
       </span>
     </div>
@@ -180,7 +183,7 @@ function NotifyModal({ eventId }: { eventId?: string }) {
       <ModalTrigger asChild>
         <button
           type="button"
-          className="w-full rounded-md border border-[var(--church-navy)] bg-transparent px-4 py-2 text-sm font-semibold uppercase tracking-widest text-[var(--church-navy)] transition-colors duration-200 hover:bg-[var(--church-navy)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--church-navy)]/50"
+          className="w-full rounded-xl border border-[rgba(163,246,156,0.35)] bg-transparent px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition-all duration-200 hover:bg-[rgba(163,246,156,0.12)] hover:border-[rgba(163,246,156,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(163,246,156,0.4)]"
         >
           Get Notified
         </button>
@@ -320,19 +323,27 @@ export function LiveStreamSection({
   eventId,
 }: LiveStreamSectionProps) {
   const { days, hours, minutes, expired } = useCountdown(nextServiceDate)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    // Slight delay so the fade-in is visible after the hero has settled
+    const id = setTimeout(() => setMounted(true), 120)
+    return () => clearTimeout(id)
+  }, [])
 
   const PlayButton = () => {
     const inner = (
       <span
         className={cn(
-          'flex h-16 w-16 items-center justify-center rounded-full bg-[var(--church-green)] shadow-lg',
-          'transition-transform duration-200',
-          isLive && 'hover:scale-110 cursor-pointer',
-          !isLive && 'opacity-90 cursor-default'
+          'flex h-20 w-20 items-center justify-center rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.45)]',
+          'bg-white/20 backdrop-blur-sm border border-white/30',
+          'transition-all duration-300',
+          isLive && 'hover:scale-110 hover:bg-white/30 cursor-pointer',
+          !isLive && 'opacity-80 cursor-default'
         )}
         aria-label={isLive ? 'Watch live stream' : 'Stream is currently offline'}
       >
-        <Play className="h-7 w-7 fill-white text-white translate-x-0.5" />
+        <Play className="h-8 w-8 fill-white text-white translate-x-0.5" />
       </span>
     )
 
@@ -359,66 +370,93 @@ export function LiveStreamSection({
   return (
     <section
       aria-label="Live stream section"
-      className="w-full py-8 px-[var(--section-padding-x)]"
-      style={{ backgroundColor: 'rgba(249, 249, 249, 1)' }}
+      className="w-full px-[var(--section-padding-x)] py-10 md:py-14"
+      style={{ backgroundColor: 'rgba(249,249,249,1)' }}
     >
       <div
-        className="mx-auto max-w-3xl rounded-2xl overflow-hidden"
+        className="mx-auto max-w-5xl overflow-hidden rounded-3xl"
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 1)',
-          boxShadow: '0px 20px 40px 0px rgba(26, 28, 28, 0.06)',
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateY(0)' : 'translateY(24px)',
+          transition: 'opacity 900ms cubic-bezier(0.16,1,0.3,1), transform 900ms cubic-bezier(0.16,1,0.3,1)',
+          boxShadow: '0 32px 80px -20px rgba(0,6,102,0.22), 0 4px 16px -4px rgba(0,0,0,0.08)',
         }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2">
-          {/* ── Thumbnail ── */}
-          <div className="relative min-h-[200px] md:min-h-[240px]">
+        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr]">
+
+          {/* ── Thumbnail — tall, cinematic ── */}
+          <div className="relative min-h-[320px] md:min-h-[480px]">
             <Image
               src={thumbnailSrc}
               alt={thumbnailAlt}
               fill
               className="object-cover"
+              sizes="(max-width: 768px) 100vw, 60vw"
+              priority
+            />
+
+            {/* Dark gradient so text/badge reads cleanly over any image */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'linear-gradient(to top, rgba(0,6,102,0.6) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)',
+              }}
+              aria-hidden="true"
             />
 
             {/* Status badge */}
-            <div className="absolute left-3 top-3 z-10">
+            <div className="absolute left-4 top-4 z-10">
               {isLive ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--church-green)] px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--church-green)] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg backdrop-blur-sm">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
                   </span>
-                  Live
+                  Live Now
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow">
-                  <span className="h-2 w-2 rounded-full bg-white" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow backdrop-blur-sm border border-white/15">
+                  <span className="h-2 w-2 rounded-full bg-red-400" />
                   Offline
                 </span>
               )}
             </div>
 
-            {/* Play button */}
+            {/* Play button — centred */}
             <PlayButton />
+
+            {/* Bottom label over image */}
+            <div className="absolute bottom-5 left-5 z-10">
+              <p className="text-[0.6rem] font-black uppercase tracking-[0.28em] text-white/60">
+                Glory Tabernacle · Live
+              </p>
+            </div>
           </div>
 
-          {/* ── Content ── */}
-          <div className="flex flex-col justify-center gap-4 p-6 md:p-8">
+          {/* ── Content panel ── */}
+          <div
+            className="flex flex-col justify-center gap-6 p-7 md:p-10"
+            style={{
+              background: 'linear-gradient(160deg, #000666 0%, #000444 100%)',
+            }}
+          >
             {/* Decorative rule */}
             <div
-              className="h-[3px] w-12 rounded-full bg-[var(--church-navy)]"
+              className="h-[3px] w-10 rounded-full"
+              style={{ backgroundColor: 'rgba(163,246,156,1)' }}
               aria-hidden="true"
             />
 
-            <div className="flex flex-col gap-2">
-              <h2 className="text-xl font-bold leading-tight text-[var(--church-navy)] md:text-2xl">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-2xl font-extrabold leading-tight text-white md:text-3xl">
                 {heading}
               </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">{subtext}</p>
+              <p className="text-sm leading-relaxed text-white/60">{subtext}</p>
             </div>
 
             {/* Countdown or live message */}
             {expired || isLive ? (
-              <p className="text-lg font-semibold text-[var(--church-green)]">
+              <p className="text-lg font-bold" style={{ color: 'rgba(163,246,156,1)' }}>
                 We&apos;re Live! 🎉
               </p>
             ) : (
@@ -436,6 +474,7 @@ export function LiveStreamSection({
             {/* CTA */}
             <NotifyModal eventId={eventId} />
           </div>
+
         </div>
       </div>
     </section>

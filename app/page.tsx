@@ -26,6 +26,10 @@ import { MembershipSection } from '@/components/church/membership-section'
 import { BooksSection } from '@/components/church/books-section'
 import { GlobalConnectionSection } from '@/components/church/global-connection-section'
 import { SupportSection } from '@/components/church/support-section'
+import {
+  ProgrammeGallerySection,
+  type ProgrammeGalleryItem,
+} from '@/components/church/programme-gallery-section'
 import { YouthScripturesSection } from '@/components/church/youth-scriptures-section'
 import { Footer } from '@/components/church/footer'
 import { prisma } from '@/lib/prisma'
@@ -504,6 +508,34 @@ async function loadYouthScriptures(): Promise<Array<{ reference: string; text: s
   }
 }
 
+/**
+ * Fetch the most-recently-published programme gallery for the homepage
+ * book-page-flip carousel. Returns null if none published or no photos yet.
+ */
+async function loadLatestProgrammeGallery(): Promise<ProgrammeGalleryItem | null> {
+  try {
+    const programme = await prisma.programmeGallery.findFirst({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+      include: { photos: { orderBy: { order: 'asc' } } },
+    })
+    if (!programme || programme.photos.length === 0) return null
+    return {
+      id: programme.id,
+      name: programme.name,
+      photos: programme.photos.map((p) => ({
+        id: p.id,
+        imageUrl: p.imageUrl,
+        imageAlt: p.imageAlt,
+        order: p.order,
+      })),
+    }
+  } catch (err) {
+    console.error('Error loading programme gallery:', err)
+    return null
+  }
+}
+
 // Fallback / placeholder data kept for reference; only used if the DB
 // fetch returns zero published sermons.
 const SERMONS_FALLBACK: Sermon[] = [
@@ -549,6 +581,7 @@ export default async function Home() {
     homepageBooks,
     homepageSermons,
     youthScriptures,
+    latestProgrammeGallery,
   ] = await Promise.all([
     loadHeroSlides(),
     loadGalleryItems(),
@@ -559,6 +592,7 @@ export default async function Home() {
     loadHomepageBooks(),
     loadHomepageSermons(),
     loadYouthScriptures(),
+    loadLatestProgrammeGallery(),
   ])
 
   const announcementEvent = toAnnouncementEvent(nextEvent)
@@ -592,7 +626,7 @@ export default async function Home() {
       )}
       {/* Inaugural service CTA — high-priority, sits right after the
           countdown so it gets a prominent slot above the About section. */}
-      {/* <InauguralServiceCta /> */}
+      <InauguralServiceCta />
       <AboutSection
         eyebrow="Our Foundation"
         heading="A Tabernacle for His Glory"
@@ -619,6 +653,9 @@ export default async function Home() {
           height: 600,
         }}
       />
+      {latestProgrammeGallery && (
+        <ProgrammeGallerySection programme={latestProgrammeGallery} />
+      )}
       {ministryCards.length > 0 && <MinistriesSection ministries={ministryCards} />}
       {galleryItems.length > 0 && <ImageGallerySection items={galleryItems} />}
       {homepageEvents.length > 0 && (

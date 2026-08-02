@@ -936,3 +936,41 @@ enum DonationStatus {
   FAILED     // Payment failed / cancelled at Stripe
   REFUNDED   // Manually refunded via Stripe dashboard
 }
+
+// =========================================================================
+// Programme Gallery
+// A named programme (e.g. "Inaugural Service 2026") with a set of photos
+// uploaded from the dashboard. The most-recently-published programme is
+// shown on the homepage as a book-page-flip carousel.
+// =========================================================================
+
+// One programme entry — set the name and publish when ready.
+model ProgrammeGallery {
+  id          String                  @id @default(cuid())
+  // The public name shown on the homepage, e.g. "Inaugural Service 2026"
+  name        String
+  published   Boolean                 @default(false)
+  createdBy   String
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  photos      ProgrammeGalleryPhoto[]
+
+  @@index([published])
+  @@index([createdAt])
+}
+
+// Individual photos belonging to a programme.
+model ProgrammeGalleryPhoto {
+  id          String            @id @default(cuid())
+  programmeId String
+  imageUrl    String            // Cloudinary URL
+  imageAlt    String
+  order       Int               @default(0)
+  createdAt   DateTime          @default(now())
+
+  programme ProgrammeGallery @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+
+  @@index([programmeId])
+  @@index([order])
+}
