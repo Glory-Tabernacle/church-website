@@ -594,7 +594,6 @@ export default async function Home() {
     loadYouthScriptures(),
     loadLatestProgrammeGallery(),
   ])
-
   const announcementEvent = toAnnouncementEvent(nextEvent)
   // If admins haven't added any sermons yet, fall back to the bundled
   // placeholders so the section never looks empty during onboarding.
