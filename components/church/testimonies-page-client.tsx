@@ -204,10 +204,7 @@ export function TestimoniesPageClient({
               Real testimonies, real God
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-gray-600 md:text-lg">
-              Every card below is a word from someone whose life Jesus
-              has touched through this house. Read them, celebrate with
-              them, and if He&rsquo;s done something for you too — add
-              yours.
+              Testimonies show forth the goodness and kindness of God over this house. Glorify God amongst His people via your testimonies.
             </p>
             {/* Scripture banner */}
         <div className="mx-auto mt-8 max-w-2xl">
